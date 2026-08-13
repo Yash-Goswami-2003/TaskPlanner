@@ -36,7 +36,7 @@ export default function OrgLoginForm({ initialCompany = '' }) {
         document.cookie = `task_planner_token=${data.token}; path=/; max-age=604800`;
 
         setStatusMessage({ type: 'success', text: `Welcome Admin! Redirecting to workspace...` });
-        setTimeout(() => router.push('/dashboard'), 600);
+        setTimeout(() => router.push('/dashboard'), 500);
       } else {
         setStatusMessage({ type: 'error', text: data.error || 'Authentication failed. Please check credentials.' });
       }
@@ -51,10 +51,10 @@ export default function OrgLoginForm({ initialCompany = '' }) {
     <form onSubmit={handleSubmit} className="space-y-4">
       {statusMessage && (
         <div
-          className={`p-3.5 rounded-xl text-xs font-medium border ${
+          className={`p-3 rounded-lg text-xs font-medium border ${
             statusMessage.type === 'error'
               ? 'bg-red-50 text-red-700 border-red-200'
-              : 'bg-neutral-900 text-white border-neutral-900'
+              : 'bg-emerald-50 text-emerald-800 border-emerald-200'
           }`}
         >
           {statusMessage.text}
@@ -63,7 +63,7 @@ export default function OrgLoginForm({ initialCompany = '' }) {
 
       {/* Company Name */}
       <div>
-        <label className="block text-xs font-semibold text-neutral-800 uppercase tracking-wider mb-1.5">
+        <label className="block text-[10px] font-semibold uppercase tracking-wider text-zinc-400 mb-1.5">
           Company Name
         </label>
         <input
@@ -71,14 +71,14 @@ export default function OrgLoginForm({ initialCompany = '' }) {
           required
           value={formData.companyName}
           onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
-          placeholder="e.g. Acme Corporation"
-          className="w-full bg-neutral-50 text-neutral-900 placeholder-neutral-400 border border-neutral-200 focus:border-neutral-900 focus:bg-white rounded-xl px-4 py-3 text-sm focus:outline-none transition shadow-2xs"
+          placeholder="e.g. Wexa.ai"
+          className="w-full bg-zinc-50/50 text-zinc-900 placeholder-zinc-400 border border-zinc-200 focus:border-zinc-900 focus:bg-white rounded-lg px-3 py-2 text-xs focus:outline-none transition-colors"
         />
       </div>
 
       {/* Admin Password */}
       <div>
-        <label className="block text-xs font-semibold text-neutral-800 uppercase tracking-wider mb-1.5">
+        <label className="block text-[10px] font-semibold uppercase tracking-wider text-zinc-400 mb-1.5">
           Admin Password
         </label>
         <input
@@ -87,23 +87,16 @@ export default function OrgLoginForm({ initialCompany = '' }) {
           value={formData.adminPassword}
           onChange={(e) => setFormData({ ...formData, adminPassword: e.target.value })}
           placeholder="••••••••••••"
-          className="w-full bg-neutral-50 text-neutral-900 placeholder-neutral-400 border border-neutral-200 focus:border-neutral-900 focus:bg-white rounded-xl px-4 py-3 text-sm focus:outline-none transition shadow-2xs"
+          className="w-full bg-zinc-50/50 text-zinc-900 placeholder-zinc-400 border border-zinc-200 focus:border-zinc-900 focus:bg-white rounded-lg px-3 py-2 text-xs focus:outline-none transition-colors"
         />
       </div>
 
       <button
         type="submit"
         disabled={isLoading}
-        className="w-full py-3.5 bg-neutral-900 hover:bg-neutral-800 text-white font-semibold text-sm rounded-xl transition shadow-md disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-4 active:scale-[0.98]"
+        className="w-full py-2.5 bg-zinc-900 hover:bg-zinc-700 text-white font-semibold text-xs rounded-lg transition-colors active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2 mt-2"
       >
-        {isLoading ? (
-          <>
-            <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-            <span>Verifying Admin Credentials...</span>
-          </>
-        ) : (
-          <span>Log In as Org Admin</span>
-        )}
+        {isLoading ? 'Verifying Admin...' : 'Log In as Org Admin'}
       </button>
     </form>
   );

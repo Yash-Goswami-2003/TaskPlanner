@@ -34,11 +34,11 @@ export default function OrgSignUpForm() {
       if (res.ok && data.success) {
         setStatusMessage({
           type: 'success',
-          text: `Organization "${formData.companyName}" registered successfully! Redirecting to login...`
+          text: `Organization "${formData.companyName}" registered! Redirecting...`
         });
         setTimeout(() => {
           router.push(`/login?company=${encodeURIComponent(formData.companyName)}`);
-        }, 1200);
+        }, 1000);
       } else {
         setStatusMessage({ type: 'error', text: data.error || 'Failed to register organization.' });
       }
@@ -53,10 +53,10 @@ export default function OrgSignUpForm() {
     <form onSubmit={handleSubmit} className="space-y-4">
       {statusMessage && (
         <div
-          className={`p-3.5 rounded-xl text-xs font-medium border ${
+          className={`p-3 rounded-lg text-xs font-medium border ${
             statusMessage.type === 'error'
               ? 'bg-red-50 text-red-700 border-red-200'
-              : 'bg-neutral-900 text-white border-neutral-900'
+              : 'bg-emerald-50 text-emerald-800 border-emerald-200'
           }`}
         >
           {statusMessage.text}
@@ -65,7 +65,7 @@ export default function OrgSignUpForm() {
 
       {/* Company Name */}
       <div>
-        <label className="block text-xs font-semibold text-neutral-800 uppercase tracking-wider mb-1.5">
+        <label className="block text-[10px] font-semibold uppercase tracking-wider text-zinc-400 mb-1.5">
           Organization / Company Name
         </label>
         <input
@@ -74,14 +74,14 @@ export default function OrgSignUpForm() {
           value={formData.companyName}
           onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
           placeholder="e.g. Acme Corporation"
-          className="w-full bg-neutral-50 text-neutral-900 placeholder-neutral-400 border border-neutral-200 focus:border-neutral-900 focus:bg-white rounded-xl px-4 py-3 text-sm focus:outline-none transition shadow-2xs"
+          className="w-full bg-zinc-50/50 text-zinc-900 placeholder-zinc-400 border border-zinc-200 focus:border-zinc-900 focus:bg-white rounded-lg px-3 py-2 text-xs focus:outline-none transition-colors"
         />
-        <p className="text-[11px] text-neutral-400 mt-1">Must be unique across Task Planner organizations.</p>
+        <p className="text-[10px] text-zinc-400 mt-1">Must be unique across Task Planner organizations.</p>
       </div>
 
       {/* Admin Password */}
       <div>
-        <label className="block text-xs font-semibold text-neutral-800 uppercase tracking-wider mb-1.5">
+        <label className="block text-[10px] font-semibold uppercase tracking-wider text-zinc-400 mb-1.5">
           Admin Password
         </label>
         <input
@@ -90,20 +90,20 @@ export default function OrgSignUpForm() {
           value={formData.adminPassword}
           onChange={(e) => setFormData({ ...formData, adminPassword: e.target.value })}
           placeholder="••••••••••••"
-          className="w-full bg-neutral-50 text-neutral-900 placeholder-neutral-400 border border-neutral-200 focus:border-neutral-900 focus:bg-white rounded-xl px-4 py-3 text-sm focus:outline-none transition shadow-2xs"
+          className="w-full bg-zinc-50/50 text-zinc-900 placeholder-zinc-400 border border-zinc-200 focus:border-zinc-900 focus:bg-white rounded-lg px-3 py-2 text-xs focus:outline-none transition-colors"
         />
-        <p className="text-[11px] text-neutral-400 mt-1">Used to log in as Organization Admin & manage users.</p>
+        <p className="text-[10px] text-zinc-400 mt-1">Used to log in as Organization Admin.</p>
       </div>
 
-      {/* Team Size Optional Field */}
+      {/* Team Size */}
       <div>
-        <label className="block text-xs font-semibold text-neutral-800 uppercase tracking-wider mb-1.5">
+        <label className="block text-[10px] font-semibold uppercase tracking-wider text-zinc-400 mb-1.5">
           Estimated Team Size
         </label>
         <select
           value={formData.teamSize}
           onChange={(e) => setFormData({ ...formData, teamSize: e.target.value })}
-          className="w-full bg-neutral-50 text-neutral-900 border border-neutral-200 focus:border-neutral-900 focus:bg-white rounded-xl px-4 py-3 text-sm focus:outline-none transition"
+          className="w-full bg-zinc-50/50 text-zinc-900 border border-zinc-200 focus:border-zinc-900 focus:bg-white rounded-lg px-3 py-2 text-xs focus:outline-none transition-colors"
         >
           <option value="1-10">1 - 10 members</option>
           <option value="11-50">11 - 50 members</option>
@@ -115,16 +115,9 @@ export default function OrgSignUpForm() {
       <button
         type="submit"
         disabled={isLoading}
-        className="w-full py-3.5 bg-neutral-900 hover:bg-neutral-800 text-white font-semibold text-sm rounded-xl transition shadow-md disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-4 active:scale-[0.98]"
+        className="w-full py-2.5 bg-zinc-900 hover:bg-zinc-700 text-white font-semibold text-xs rounded-lg transition-colors active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2 mt-2"
       >
-        {isLoading ? (
-          <>
-            <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-            <span>Registering Organization...</span>
-          </>
-        ) : (
-          <span>Register Organization</span>
-        )}
+        {isLoading ? 'Registering...' : 'Register Organization'}
       </button>
     </form>
   );

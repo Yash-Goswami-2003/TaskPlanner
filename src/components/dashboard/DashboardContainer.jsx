@@ -5,11 +5,12 @@ import DashboardHeader from './DashboardHeader';
 import DashboardSubheader from './DashboardSubheader';
 import DashboardSidebar from './DashboardSidebar';
 import MailboxTaskList from './MailboxTaskList';
+import TeamMemberList from './TeamMemberList';
 import CreateTaskModal from './CreateTaskModal';
 import CreateEmployeeModal from './CreateEmployeeModal';
 
 export default function DashboardContainer() {
-  const [user, setUser] = useState({ companyName: 'Wexa2', userName: 'Yash', role: 'DB Admin' });
+  const [user, setUser] = useState({ companyName: 'Wexa.ai', userName: 'Yash', role: 'DB Admin' });
   const [activeView, setActiveView] = useState('mailbox'); // 'mailbox' | 'all_tasks' | 'team'
   const [tasks, setTasks] = useState([]);
   const [teamMembers, setTeamMembers] = useState([]);
@@ -27,7 +28,7 @@ export default function DashboardContainer() {
     }
 
     if (storedToken) {
-      // 1. Fetch team members count
+      // 1. Fetch team members list
       fetch('/api/employees', {
         headers: { Authorization: `Bearer ${storedToken}` }
       })
@@ -37,7 +38,7 @@ export default function DashboardContainer() {
         })
         .catch(() => {});
 
-      // 2. Fetch real tasks from CognoDB
+      // 2. Fetch tasks (mailbox assigned tasks vs all org tasks)
       const taskUrl = activeView === 'mailbox' ? '/api/tasks?mailbox=true' : '/api/tasks';
       fetch(taskUrl, {
         headers: { Authorization: `Bearer ${storedToken}` }
@@ -54,17 +55,29 @@ export default function DashboardContainer() {
     setTasks([newTask, ...tasks]);
   };
 
+  const handleEmployeeCreated = () => {
+    const token = localStorage.getItem('task_planner_token');
+    if (token) {
+      fetch('/api/employees', { headers: { Authorization: `Bearer ${token}` } })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.employees) setTeamMembers(data.employees);
+        })
+        .catch(() => {});
+    }
+  };
+
   return (
-    <div className="min-h-screen flex flex-col bg-white text-neutral-900 selection:bg-neutral-900 selection:text-white">
-      {/* 1. Header Bar */}
+    <div className="min-h-screen flex flex-col bg-white text-zinc-900 selection:bg-zinc-900 selection:text-white">
+      {/* Header Bar */}
       <DashboardHeader user={user} />
 
-      {/* 2. Subheader Banner */}
+      {/* Subheader */}
       <DashboardSubheader user={user} teamCount={teamMembers.length || 1} />
 
-      {/* 3. Spacious Layout (Sidebar + Task Workspace) */}
-      <div className="flex-1 flex min-h-[calc(100vh-160px)]">
-        {/* Left Sidebar */}
+      {/* Main Workspace (Sidebar + Dynamic Workspace Area) */}
+      <div className="flex-1 flex min-h-[calc(100vh-100px)]">
+        {/* Sidebar */}
         <DashboardSidebar
           user={user}
           activeView={activeView}
@@ -73,17 +86,26 @@ export default function DashboardContainer() {
           onOpenCreateEmployee={() => setIsEmployeeModalOpen(true)}
         />
 
-        {/* Spacious Main Workspace */}
-        <main className="flex-1 min-w-0 bg-neutral-50/30">
-          <MailboxTaskList
-            tasks={tasks}
-            viewTitle={activeView === 'mailbox' ? 'Mailbox (My Tasks)' : 'All Organization Tasks'}
-            onOpenCreateTask={() => setIsTaskModalOpen(true)}
-          />
+        {/* Dynamic Workspace Content */}
+        <main className="flex-1 min-w-0 bg-zinc-50/50">
+          {activeView === 'team' ? (
+            <TeamMemberList
+              members={teamMembers}
+              companyName={user.companyName}
+              onOpenCreateEmployee={() => setIsEmployeeModalOpen(true)}
+              currentUserRole={user.role}
+            />
+          ) : (
+            <MailboxTaskList
+              tasks={tasks}
+              viewTitle={activeView === 'mailbox' ? 'My Tasks' : 'All Tasks'}
+              onOpenCreateTask={() => setIsTaskModalOpen(true)}
+            />
+          )}
         </main>
       </div>
 
-      {/* 4. Modals */}
+      {/* Modals */}
       <CreateTaskModal
         isOpen={isTaskModalOpen}
         onClose={() => setIsTaskModalOpen(false)}
@@ -93,17 +115,7 @@ export default function DashboardContainer() {
       <CreateEmployeeModal
         isOpen={isEmployeeModalOpen}
         onClose={() => setIsEmployeeModalOpen(false)}
-        onEmployeeCreated={() => {
-          const token = localStorage.getItem('task_planner_token');
-          if (token) {
-            fetch('/api/employees', { headers: { Authorization: `Bearer ${token}` } })
-              .then((res) => res.json())
-              .then((data) => {
-                if (data.employees) setTeamMembers(data.employees);
-              })
-              .catch(() => {});
-          }
-        }}
+        onEmployeeCreated={handleEmployeeCreated}
       />
     </div>
   );

@@ -2,6 +2,13 @@
 
 import React, { useState, useEffect } from 'react';
 
+const EditIcon = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+    <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+  </svg>
+);
+
 export default function NotionTaskBody({ description, onSaveDescription }) {
   const [isEditing, setIsEditing] = useState(false);
   const [textInput, setTextInput] = useState(description || '');
@@ -19,17 +26,17 @@ export default function NotionTaskBody({ description, onSaveDescription }) {
   };
 
   return (
-    <div className="py-6 border-b border-neutral-200 space-y-3">
+    <div className="py-6 border-b border-zinc-100 space-y-3">
       <div className="flex items-center justify-between">
-        <h2 className="text-xs font-bold uppercase tracking-wider text-neutral-400">
+        <h2 className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
           Document Description & Notes
         </h2>
         {!isEditing && (
           <button
             onClick={() => setIsEditing(true)}
-            className="text-xs font-semibold text-neutral-900 hover:underline flex items-center gap-1"
+            className="text-xs font-medium text-zinc-500 hover:text-zinc-900 flex items-center gap-1.5 transition-colors"
           >
-            <span>✎</span> Edit Document
+            <EditIcon /> Edit Description
           </button>
         )}
       </div>
@@ -37,26 +44,26 @@ export default function NotionTaskBody({ description, onSaveDescription }) {
       {isEditing ? (
         <div className="space-y-3">
           <textarea
-            rows={8}
+            rows={6}
             value={textInput}
             onChange={(e) => setTextInput(e.target.value)}
-            placeholder="Type task description, technical notes, specification blocks, or subtask checklists..."
-            className="w-full bg-transparent text-neutral-900 focus:outline-none transition leading-relaxed resize-none font-sans text-sm p-0 border-0"
+            placeholder="Type task description, technical specifications, or subtask checklists..."
+            className="w-full bg-zinc-50/50 text-zinc-900 border border-zinc-200 focus:border-zinc-900 focus:bg-white rounded-lg p-3 text-xs focus:outline-none transition-colors resize-none leading-relaxed"
           />
-          <div className="flex items-center justify-end gap-2 pt-2 border-t border-neutral-100">
+          <div className="flex items-center justify-end gap-2">
             <button
               onClick={() => {
                 setIsEditing(false);
                 setTextInput(description || '');
               }}
-              className="px-3 py-1.5 text-xs font-medium text-neutral-600 hover:bg-neutral-100 rounded-lg"
+              className="px-3 py-1.5 text-xs font-medium text-zinc-600 hover:bg-zinc-100 rounded-lg transition-colors"
             >
               Cancel
             </button>
             <button
               onClick={handleSave}
               disabled={isSaving}
-              className="px-4 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold rounded-lg transition disabled:opacity-50"
+              className="px-4 py-1.5 bg-zinc-900 hover:bg-zinc-700 text-white text-xs font-semibold rounded-lg transition-colors disabled:opacity-50"
             >
               {isSaving ? 'Saving...' : 'Save Description'}
             </button>
@@ -65,12 +72,12 @@ export default function NotionTaskBody({ description, onSaveDescription }) {
       ) : (
         <div
           onClick={() => setIsEditing(true)}
-          className="text-sm text-neutral-800 leading-relaxed cursor-pointer hover:bg-neutral-50/50 p-2 -mx-2 rounded transition min-h-[90px]"
+          className="text-xs text-zinc-700 leading-relaxed cursor-pointer hover:bg-zinc-50/50 p-3 -mx-3 rounded-lg transition-colors min-h-[80px]"
         >
           {description ? (
-            <div className="whitespace-pre-wrap font-sans text-neutral-800 leading-relaxed">{description}</div>
+            <div className="whitespace-pre-wrap text-zinc-800 leading-relaxed font-sans">{description}</div>
           ) : (
-            <p className="text-neutral-400 italic">
+            <p className="text-zinc-400 italic">
               No description written yet. Click here to start writing task documentation...
             </p>
           )}

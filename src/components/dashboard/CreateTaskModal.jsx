@@ -2,6 +2,20 @@
 
 import React, { useState, useEffect } from 'react';
 
+const CloseIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="18" y1="6" x2="6" y2="18" />
+    <line x1="6" y1="6" x2="18" y2="18" />
+  </svg>
+);
+
+const priorityOptions = [
+  { id: 'P1', label: 'P1 · High', dot: 'bg-red-500' },
+  { id: 'P2', label: 'P2 · Medium', dot: 'bg-orange-500' },
+  { id: 'P3', label: 'P3 · Low', dot: 'bg-yellow-500' },
+  { id: 'P4', label: 'P4 · Low', dot: 'bg-zinc-400' },
+];
+
 export default function CreateTaskModal({ isOpen, onClose, onTaskCreated }) {
   const todayStr = new Date().toISOString().split('T')[0];
   
@@ -9,6 +23,7 @@ export default function CreateTaskModal({ isOpen, onClose, onTaskCreated }) {
     title: '',
     description: '',
     priority: 'P1',
+    startDate: todayStr,
     dueDate: todayStr,
     selectedAssignees: []
   });
@@ -16,7 +31,6 @@ export default function CreateTaskModal({ isOpen, onClose, onTaskCreated }) {
   const [isLoading, setIsLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState(null);
 
-  // Fetch live organization employees from CognoDB
   useEffect(() => {
     if (isOpen) {
       const token = localStorage.getItem('task_planner_token');
@@ -71,6 +85,7 @@ export default function CreateTaskModal({ isOpen, onClose, onTaskCreated }) {
           title: formData.title,
           description: formData.description,
           priority: formData.priority,
+          startDate: formData.startDate,
           dueDate: formData.dueDate,
           assignees: formData.selectedAssignees
         })
@@ -78,21 +93,22 @@ export default function CreateTaskModal({ isOpen, onClose, onTaskCreated }) {
 
       const data = await res.json();
       if (res.ok && data.success) {
-        setStatusMessage({ type: 'success', text: `Task created and assigned in CognoDB!` });
+        setStatusMessage({ type: 'success', text: 'Task created successfully.' });
         if (onTaskCreated) onTaskCreated(data.task);
         setTimeout(() => {
           setFormData({
             title: '',
             description: '',
             priority: 'P1',
+            startDate: todayStr,
             dueDate: todayStr,
             selectedAssignees: []
           });
           setStatusMessage(null);
           onClose();
-        }, 600);
+        }, 400);
       } else {
-        setStatusMessage({ type: 'error', text: data.error || 'Failed to create task in CognoDB.' });
+        setStatusMessage({ type: 'error', text: data.error || 'Failed to create task.' });
       }
     } catch (err) {
       setStatusMessage({ type: 'error', text: 'Connection error while creating task.' });
@@ -102,34 +118,39 @@ export default function CreateTaskModal({ isOpen, onClose, onTaskCreated }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-900/50 backdrop-blur-xs p-4">
-      <div className="w-full max-w-lg bg-white border border-neutral-200 rounded-3xl shadow-2xl p-6 space-y-4 animate-in fade-in zoom-in-95 max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/40 backdrop-blur-xs p-4">
+      <div className="w-full max-w-lg bg-white border border-zinc-200 rounded-2xl shadow-lg overflow-hidden animate-in fade-in zoom-in-95 max-h-[90vh] flex flex-col">
+        {/* Modal Header */}
+        <div className="px-6 py-4 border-b border-zinc-100 flex items-center justify-between">
           <div>
-            <h3 className="text-base font-bold text-neutral-900">Create New Task</h3>
-            <p className="text-xs text-neutral-500">Plan work, select calendar deadline, and multi-assign team members</p>
+            <h3 className="text-sm font-semibold text-zinc-900">Create New Task</h3>
+            <p className="text-xs text-zinc-400 mt-0.5">Define task details, timeline, and assign team members</p>
           </div>
-          <button onClick={onClose} className="text-neutral-400 hover:text-neutral-900 p-1 rounded-md text-sm">
-            ✕
+          <button
+            onClick={onClose}
+            className="text-zinc-400 hover:text-zinc-900 p-1.5 rounded-lg hover:bg-zinc-100 transition-colors"
+          >
+            <CloseIcon />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Modal Form Content */}
+        <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto flex-1">
           {statusMessage && (
             <div
-              className={`p-3 rounded-xl text-xs font-medium border ${
+              className={`p-3 rounded-lg text-xs font-medium border ${
                 statusMessage.type === 'error'
-                  ? 'bg-neutral-100 text-neutral-900 border-neutral-300'
-                  : 'bg-neutral-900 text-white border-neutral-900'
+                  ? 'bg-red-50 text-red-700 border-red-200'
+                  : 'bg-emerald-50 text-emerald-800 border-emerald-200'
               }`}
             >
               {statusMessage.text}
             </div>
           )}
 
-          {/* Task Name */}
+          {/* Task Title */}
           <div>
-            <label className="block text-xs font-semibold text-neutral-800 uppercase tracking-wider mb-1.5">
+            <label className="block text-[10px] font-semibold uppercase tracking-wider text-zinc-400 mb-1.5">
               Task Title
             </label>
             <input
@@ -138,63 +159,85 @@ export default function CreateTaskModal({ isOpen, onClose, onTaskCreated }) {
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               placeholder="e.g. Implement OAuth2 Refresh Tokens"
-              className="w-full bg-neutral-50 text-neutral-900 placeholder-neutral-400 border border-neutral-200 focus:border-neutral-900 focus:bg-white rounded-xl px-4 py-3 text-sm focus:outline-none transition shadow-2xs"
+              className="w-full bg-zinc-50/50 text-zinc-900 placeholder-zinc-400 border border-zinc-200 focus:border-zinc-900 focus:bg-white rounded-lg px-3 py-2 text-xs focus:outline-none transition-colors"
             />
           </div>
 
           {/* Task Description */}
           <div>
-            <label className="block text-xs font-semibold text-neutral-800 uppercase tracking-wider mb-1.5">
+            <label className="block text-[10px] font-semibold uppercase tracking-wider text-zinc-400 mb-1.5">
               Task Description
             </label>
             <textarea
               rows={3}
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Write detailed specifications, notes, or implementation details..."
-              className="w-full bg-neutral-50 text-neutral-900 placeholder-neutral-400 border border-neutral-200 focus:border-neutral-900 focus:bg-white rounded-xl px-4 py-2.5 text-sm focus:outline-none transition shadow-2xs resize-none"
+              placeholder="Write detailed specifications, notes, or implementation requirements..."
+              className="w-full bg-zinc-50/50 text-zinc-900 placeholder-zinc-400 border border-zinc-200 focus:border-zinc-900 focus:bg-white rounded-lg px-3 py-2 text-xs focus:outline-none transition-colors resize-none"
             />
           </div>
 
-          {/* Grid: Priority & Calendar Scheduler */}
-          <div className="grid grid-cols-2 gap-4">
+          {/* Priority Chips */}
+          <div>
+            <label className="block text-[10px] font-semibold uppercase tracking-wider text-zinc-400 mb-1.5">
+              Priority Level
+            </label>
+            <div className="grid grid-cols-4 gap-2">
+              {priorityOptions.map((opt) => (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => setFormData({ ...formData, priority: opt.id })}
+                  className={`flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg border text-xs font-medium transition-all ${
+                    formData.priority === opt.id
+                      ? 'bg-zinc-900 text-white border-zinc-900 shadow-2xs'
+                      : 'bg-white text-zinc-600 border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50'
+                  }`}
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full ${opt.dot}`} />
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Timeline: Start Date & Due Date */}
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-neutral-800 uppercase tracking-wider mb-1.5">
-                Priority
+              <label className="block text-[10px] font-semibold uppercase tracking-wider text-zinc-400 mb-1.5">
+                Start Date
               </label>
-              <select
-                value={formData.priority}
-                onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
-                className="w-full bg-neutral-50 text-neutral-900 border border-neutral-200 focus:border-neutral-900 focus:bg-white rounded-xl px-3 py-2.5 text-sm focus:outline-none transition"
-              >
-                <option value="P1">P1 - High Priority</option>
-                <option value="P2">P2 - Medium Priority</option>
-                <option value="P3">P3 - Low Priority</option>
-              </select>
+              <input
+                type="date"
+                required
+                value={formData.startDate}
+                onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                className="w-full bg-zinc-50/50 text-zinc-900 border border-zinc-200 focus:border-zinc-900 focus:bg-white rounded-lg px-3 py-2 text-xs focus:outline-none transition-colors"
+              />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-neutral-800 uppercase tracking-wider mb-1.5">
-                Scheduler / Calendar Date
+              <label className="block text-[10px] font-semibold uppercase tracking-wider text-zinc-400 mb-1.5">
+                Due Date
               </label>
               <input
                 type="date"
                 required
                 value={formData.dueDate}
                 onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-                className="w-full bg-neutral-50 text-neutral-900 border border-neutral-200 focus:border-neutral-900 focus:bg-white rounded-xl px-3 py-2.5 text-sm focus:outline-none transition"
+                className="w-full bg-zinc-50/50 text-zinc-900 border border-zinc-200 focus:border-zinc-900 focus:bg-white rounded-lg px-3 py-2 text-xs focus:outline-none transition-colors"
               />
             </div>
           </div>
 
-          {/* Multi-Select Assignees Checklist */}
+          {/* Assignees List */}
           <div>
-            <label className="block text-xs font-semibold text-neutral-800 uppercase tracking-wider mb-1.5">
-              Assign Team Members (Multi-Select)
+            <label className="block text-[10px] font-semibold uppercase tracking-wider text-zinc-400 mb-1.5">
+              Assign Team Members
             </label>
-            <div className="p-3 bg-neutral-50 border border-neutral-200 rounded-xl space-y-2 max-h-36 overflow-y-auto">
+            <div className="p-2.5 bg-zinc-50/50 border border-zinc-200 rounded-lg space-y-1.5 max-h-36 overflow-y-auto">
               {availableEmployees.length === 0 ? (
-                <p className="text-xs text-neutral-400">Loading team members...</p>
+                <p className="text-xs text-zinc-400 p-1">Loading members...</p>
               ) : (
                 availableEmployees.map((empName) => {
                   const isSelected = formData.selectedAssignees.includes(empName);
@@ -202,19 +245,23 @@ export default function CreateTaskModal({ isOpen, onClose, onTaskCreated }) {
                     <div
                       key={empName}
                       onClick={() => handleToggleAssignee(empName)}
-                      className={`flex items-center justify-between p-2 rounded-lg text-xs cursor-pointer transition border ${
+                      className={`flex items-center justify-between px-3 py-1.5 rounded-lg text-xs cursor-pointer transition-colors border ${
                         isSelected
-                          ? 'bg-neutral-900 text-white border-neutral-900'
-                          : 'bg-white text-neutral-800 border-neutral-200 hover:border-neutral-300'
+                          ? 'bg-zinc-900 text-white border-zinc-900'
+                          : 'bg-white text-zinc-700 border-zinc-200 hover:border-zinc-300'
                       }`}
                     >
                       <div className="flex items-center gap-2">
-                        <span className="w-5 h-5 rounded-full bg-neutral-200 text-neutral-900 font-bold text-[10px] flex items-center justify-center">
+                        <div
+                          className={`w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center ${
+                            isSelected ? 'bg-zinc-700 text-white' : 'bg-zinc-100 text-zinc-800'
+                          }`}
+                        >
                           {empName.substring(0, 1).toUpperCase()}
-                        </span>
-                        <span className="font-medium">{empName}</span>
+                        </div>
+                        <span className="font-medium text-xs">{empName}</span>
                       </div>
-                      <span className="font-mono text-[10px]">
+                      <span className="text-[10px] font-medium opacity-80">
                         {isSelected ? '✓ Assigned' : '+ Add'}
                       </span>
                     </div>
@@ -224,20 +271,21 @@ export default function CreateTaskModal({ isOpen, onClose, onTaskCreated }) {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 pt-2">
+          {/* Footer Actions */}
+          <div className="flex items-center justify-end gap-2 pt-3 border-t border-zinc-100">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-3 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-medium text-sm rounded-xl transition"
+              className="px-4 py-2 bg-white hover:bg-zinc-100 text-zinc-700 border border-zinc-200 font-medium text-xs rounded-lg transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isLoading}
-              className="flex-1 py-3 bg-neutral-900 hover:bg-neutral-800 text-white font-semibold text-sm rounded-xl transition shadow-md disabled:opacity-40 flex items-center justify-center gap-2"
+              className="px-4 py-2 bg-zinc-900 hover:bg-zinc-700 text-white font-semibold text-xs rounded-lg transition-colors active:scale-[0.98] disabled:opacity-50"
             >
-              {isLoading ? <span>Saving to CognoDB...</span> : <span>Create & Assign Task</span>}
+              {isLoading ? 'Saving...' : 'Create Task'}
             </button>
           </div>
         </form>

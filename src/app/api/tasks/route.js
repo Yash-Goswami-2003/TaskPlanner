@@ -51,7 +51,8 @@ export async function GET(req) {
 
     if (mailboxOnly) {
       cypher = `
-        MATCH (e:Employee {name: $currentUserName})-[:ASSIGNED_TO]->(t:Task)
+        MATCH (e:Employee {name: $currentUserName})-[:MEMBER_OF]->(o:Organization {name: $companyName})
+        MATCH (e)-[:ASSIGNED_TO]->(t:Task)
         OPTIONAL MATCH (allE:Employee)-[:ASSIGNED_TO]->(t)
         RETURN t, collect(DISTINCT allE.name) AS assignees
         ORDER BY t.createdAt DESC
@@ -59,7 +60,11 @@ export async function GET(req) {
     } else {
       cypher = `
         MATCH (e:Employee)-[:MEMBER_OF]->(o:Organization {name: $companyName})
-        MATCH (e)-[:ASSIGNED_TO]->(t:Task)
+        OPTIONAL MATCH (e)-[:ASSIGNED_TO]->(tAssigned:Task)
+        OPTIONAL MATCH (f:Feature)-[:BELONGS_TO]->(o)
+        OPTIONAL MATCH (tFeature:Task)-[:PART_OF]->(f)
+        WITH coalesce(tAssigned, tFeature) AS t
+        WHERE t IS NOT NULL
         WITH DISTINCT t
         OPTIONAL MATCH (allE:Employee)-[:ASSIGNED_TO]->(t)
         RETURN t, collect(DISTINCT allE.name) AS assignees
@@ -101,7 +106,7 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Unauthorized: Invalid token.' }, { status: 401 });
     }
 
-    const { title, description, priority, dueDate, assignees } = await req.json();
+    const { title, description, priority, startDate, dueDate, assignees } = await req.json();
 
     if (!title || !title.trim()) {
       return NextResponse.json({ error: 'Task title is required.' }, { status: 400 });
@@ -110,6 +115,7 @@ export async function POST(req) {
     const taskId = `TASK-${Math.floor(100 + Math.random() * 900)}`;
     const companyName = decoded.companyName;
     const cleanAssignees = Array.isArray(assignees) ? assignees : [];
+    const today = new Date().toISOString().split('T')[0];
 
     // 1. Create Task Node in CognoDB
     const createTaskCypher = `
@@ -118,6 +124,7 @@ export async function POST(req) {
         title: $title,
         description: $description,
         priority: $priority,
+        startDate: $startDate,
         dueDate: $dueDate,
         status: 'In Progress',
         createdAt: timestamp()
@@ -129,7 +136,8 @@ export async function POST(req) {
       title: title.trim(),
       description: description || '',
       priority: priority || 'P1',
-      dueDate: dueDate || new Date().toISOString().split('T')[0]
+      startDate: startDate || today,
+      dueDate: dueDate || today
     });
 
     // 2. Link selected assignees to the Task
@@ -157,7 +165,8 @@ export async function POST(req) {
         title: title.trim(),
         description: description || '',
         priority: priority || 'P1',
-        dueDate: dueDate || new Date().toISOString().split('T')[0],
+        startDate: startDate || today,
+        dueDate: dueDate || today,
         status: 'In Progress',
         assignees: cleanAssignees
       }
@@ -171,7 +180,7 @@ export async function POST(req) {
   }
 }
 
-// PATCH: Update task description or details in CognoDB
+// PATCH: Update task details (description, status, priority, startDate, dueDate) in CognoDB
 export async function PATCH(req) {
   try {
     const token = getTokenFromRequest(req);
@@ -181,26 +190,32 @@ export async function PATCH(req) {
       return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
     }
 
-    const { taskId, description, dueDate, priority, assignees } = await req.json();
+    const { taskId, description, status, priority, startDate, dueDate, assignees } = await req.json();
 
     if (!taskId) {
       return NextResponse.json({ error: 'Task ID is required.' }, { status: 400 });
     }
 
+    const today = new Date().toISOString().split('T')[0];
+
     // Update Task properties in CognoDB
     const updateCypher = `
       MATCH (t:Task {id: $taskId})
-      SET t.description = $description,
-          t.dueDate = $dueDate,
-          t.priority = $priority,
+      SET t.description = COALESCE($description, t.description),
+          t.status = COALESCE($status, t.status),
+          t.priority = COALESCE($priority, t.priority),
+          t.startDate = COALESCE($startDate, t.startDate),
+          t.dueDate = COALESCE($dueDate, t.dueDate),
           t.updatedAt = timestamp()
       RETURN t
     `;
     await executeCypherQuery(updateCypher, {
       taskId,
-      description: description || '',
-      dueDate: dueDate || new Date().toISOString().split('T')[0],
-      priority: priority || 'P1'
+      description: description !== undefined ? description : '',
+      status: status || 'In Progress',
+      priority: priority || 'P1',
+      startDate: startDate || today,
+      dueDate: dueDate || today
     });
 
     if (Array.isArray(assignees)) {

@@ -107,3 +107,48 @@ What to avoid
 ❌ Anything related to the take-home assignment being presented as the landing-page purpose
 
 And let me clarify one thing more, which I just noticed here, and it should be targeted. I don't know why it is not targeting. What you have to do is for every page if the page requires any components there will be a dedicated components folder for it and the comp. Inside the component there will be the list of component files which will be used in that page. That's easy, right? The utils, the components, all that.
+
+Here is a list of 8 UI/UX guidelines based on this design system that you can add directly to your project rules:
+
+### Dashboard UI/UX Design System Rules
+
+1. **Strict Monochromatic Palette with Semantic Tints**
+   * Primary background: `#ffffff` (`bg-white`).
+   * Main text & primary buttons: `zinc-900` (`#18181b`).
+   * Secondary/metadata text: `zinc-400` / `zinc-500`.
+   * Borders & dividers: `zinc-100` / `zinc-200`.
+   * Color tints (emerald, red, orange, yellow) must be muted and reserved strictly for priority badges, status indicators, and live pills.
+
+2. **Compact & Standardized Vertical Heights**
+   * Headers should be compact (`h-[56px]`).
+   * Subheaders and section bars should use tight, purposeful padding (`py-4` to `py-5`).
+   * Avoid large unnecessary vertical spacer boxes to keep essential content visible above the fold.
+
+3. **Full-Bleed Edge Alignment**
+   * Align top headers, subheaders, and sidebars flush to consistent horizontal padding (`px-5` or `px-6`).
+   * Do not wrap edge-to-edge dashboard banners or subheaders in arbitrary `max-w-7xl` container constraints unless specifically building centered document views.
+
+4. **Crisp Fine Borders over Drop Shadows**
+   * Use thin, subtle borders (`border-zinc-100` / `border-zinc-200`) to define cards, sidebars, and structural dividers.
+   * Avoid heavy drop shadows or glow effects. Reserve subtle elevation (`shadow-xs` / `shadow-sm`) only for primary action buttons or floating popovers.
+
+5. **Clean SVG Iconography (No Emojis)**
+   * Use minimal, vector SVG icons (`12px` to `16px`, `strokeWidth={2}`) for all workspace navigation, primary actions, and status indicators.
+   * Do not use standard unicode emojis for UI icons.
+
+6. **Structured Card Information Hierarchy**
+   * Task and data cards must follow a strict vertical hierarchy:
+     1. Top row: Item ID (mono text) + Title (semibold) + Priority tag (top right badge) + Arrow indicator.
+     2. Middle: Description (`line-clamp-2`, muted text).
+     3. Footer divider (`border-t border-zinc-100`): Stacked user avatar initials + Due date / metadata.
+
+7. **Refined Typography & Micro Scales**
+   * Metadata & section labels: `text-[10px]` uppercase tracking-wide (`tracking-wider` / `tracking-widest`).
+   * Body copy & navigation links: `text-xs` (`12px`).
+   * Card titles: `text-sm` (`14px`) font-semibold.
+   * Section headers: `text-base` / `text-lg` with tight leading (`leading-none` or `leading-snug`).
+
+8. **Subtle Micro-Interactions & Hover States**
+   * Interactive rows and navigation items must have smooth color transitions (`transition-colors` / `transition-all`).
+   * Buttons should feature subtle click feedback (`active:scale-[0.98]`).
+   * Cards should respond on hover with a subtle border darkening (`hover:border-zinc-400`).

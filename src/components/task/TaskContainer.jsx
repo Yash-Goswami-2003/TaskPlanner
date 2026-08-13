@@ -44,11 +44,14 @@ export default function TaskContainer({ taskId }) {
     }
   }, [taskId]);
 
-  const handleSaveDescription = async (newDescription) => {
+  const handleUpdateTaskProperty = async (updates) => {
     if (!task) return;
+    const updatedTask = { ...task, ...updates };
+    setTask(updatedTask); // optimistic update
+
     try {
       const token = localStorage.getItem('task_planner_token');
-      const res = await fetch('/api/tasks', {
+      await fetch('/api/tasks', {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -56,49 +59,20 @@ export default function TaskContainer({ taskId }) {
         },
         body: JSON.stringify({
           taskId: task.id,
-          description: newDescription,
-          dueDate: task.dueDate,
-          priority: task.priority
+          description: updatedTask.description,
+          status: updatedTask.status,
+          priority: updatedTask.priority,
+          startDate: updatedTask.startDate,
+          dueDate: updatedTask.dueDate
         })
       });
-
-      if (res.ok) {
-        setTask({ ...task, description: newDescription });
-      }
     } catch (err) {
-      console.error('Failed to update task description:', err);
-    }
-  };
-
-  const handleDueDateChange = async (newDueDate) => {
-    if (!task) return;
-    try {
-      const token = localStorage.getItem('task_planner_token');
-      const res = await fetch('/api/tasks', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          taskId: task.id,
-          description: task.description,
-          dueDate: newDueDate,
-          priority: task.priority
-        })
-      });
-
-      if (res.ok) {
-        setTask({ ...task, dueDate: newDueDate });
-      }
-    } catch (err) {
-      console.error('Failed to update due date:', err);
+      console.error('Failed to update task property:', err);
     }
   };
 
   const handleDeleteTask = async () => {
     if (!task) return;
-    if (!confirm(`Are you sure you want to delete task "${task.title}" (${task.id}) from CognoDB?`)) return;
 
     setIsDeleting(true);
     try {
@@ -120,53 +94,59 @@ export default function TaskContainer({ taskId }) {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-white flex flex-col items-center justify-center text-xs font-mono text-neutral-400">
-        <div className="w-5 h-5 border-2 border-neutral-900 border-t-transparent rounded-full animate-spin mb-2"></div>
-        <span>Loading Notion Document from CognoDB...</span>
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center text-xs font-mono text-zinc-400">
+        <div className="w-4 h-4 border-2 border-zinc-900 border-t-transparent rounded-full animate-spin mb-2" />
+        <span>Loading task details...</span>
       </div>
     );
   }
 
   if (error || !task) {
     return (
-      <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6 text-center text-neutral-500">
-        <span className="text-4xl mb-3">⚠️</span>
-        <h2 className="text-lg font-bold text-neutral-900 mb-1">Document Not Found</h2>
-        <p className="text-xs text-neutral-500 max-w-xs mb-4">
-          Task "{taskId}" could not be found or has been deleted from CognoDB.
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6 text-center text-zinc-500">
+        <h2 className="text-base font-semibold text-zinc-900 mb-1">Task Not Found</h2>
+        <p className="text-xs text-zinc-400 max-w-xs mb-4">
+          Task "{taskId}" could not be found or has been deleted.
         </p>
         <button
           onClick={() => router.push('/dashboard')}
-          className="px-4 py-2 bg-neutral-900 text-white font-semibold text-xs rounded-xl shadow-2xs"
+          className="px-4 py-2 bg-zinc-900 text-white font-semibold text-xs rounded-lg shadow-sm"
         >
-          ← Return to Dashboard
+          Return to Dashboard
         </button>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-white text-neutral-900 selection:bg-neutral-900 selection:text-white">
-      {/* Top Bar */}
+    <div className="min-h-screen flex flex-col bg-white text-zinc-900 selection:bg-zinc-900 selection:text-white">
+      {/* Header */}
       <TaskDetailHeader
         taskId={task.id}
+        taskTitle={task.title}
         user={user}
         onDeleteTask={handleDeleteTask}
         isDeleting={isDeleting}
       />
 
-      {/* Unboxed Flush Notion Page Document Container */}
-      <main className="flex-1 max-w-3xl mx-auto w-full py-12 px-6 sm:px-8 space-y-6">
-        {/* 1. Header & Property Grid */}
-        <NotionTaskHeader task={task} onDueDateChange={handleDueDateChange} />
-
-        {/* 2. Notion Document Description Body */}
-        <NotionTaskBody
-          description={task.description}
-          onSaveDescription={handleSaveDescription}
+      {/* Main Task Document Body */}
+      <main className="flex-1 max-w-3xl mx-auto w-full py-10 px-6 sm:px-8 space-y-6">
+        {/* Header & Property Grid */}
+        <NotionTaskHeader
+          task={task}
+          onStatusChange={(status) => handleUpdateTaskProperty({ status })}
+          onPriorityChange={(priority) => handleUpdateTaskProperty({ priority })}
+          onStartDateChange={(startDate) => handleUpdateTaskProperty({ startDate })}
+          onDueDateChange={(dueDate) => handleUpdateTaskProperty({ dueDate })}
         />
 
-        {/* 3. Unboxed Notion Discussion Comment Stream */}
+        {/* Task Description */}
+        <NotionTaskBody
+          description={task.description}
+          onSaveDescription={(description) => handleUpdateTaskProperty({ description })}
+        />
+
+        {/* Discussion / Comments Stream */}
         <NotionTaskComments taskId={task.id} currentUser={user} />
       </main>
     </div>
