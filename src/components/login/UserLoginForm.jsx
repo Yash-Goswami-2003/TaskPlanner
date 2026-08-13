@@ -34,7 +34,7 @@ export default function UserLoginForm() {
       if (res.ok && data.success && data.token) {
         localStorage.setItem('task_planner_token', data.token);
         localStorage.setItem('task_planner_user', JSON.stringify(data.user));
-        document.cookie = `task_planner_token=${data.token}; path=/; max-age=604800`;
+        document.cookie = `task_planner_token=${data.token}; path=/; max-age=21600`;
 
         setStatusMessage({ type: 'success', text: `Welcome ${formData.userName}! Redirecting...` });
         setTimeout(() => router.push('/dashboard'), 500);

@@ -29,6 +29,14 @@ const UsersIcon = () => (
   </svg>
 );
 
+const SparklesIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 3l1.912 5.813a2 2 0 001.275 1.275L21 12l-5.813 1.912a2 2 0 00-1.275 1.275L12 21l-1.912-5.813a2 2 0 00-1.275-1.275L3 12l5.813-1.912a2 2 0 001.275-1.275L12 3z" />
+    <path d="M5 3v4" />
+    <path d="M3 5h4" />
+  </svg>
+);
+
 const PlusIcon = () => (
   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
     <line x1="12" y1="5" x2="12" y2="19" />
@@ -40,41 +48,21 @@ export default function DashboardSidebar({
   user,
   activeView,
   onViewChange,
-  onOpenCreateTask,
   onOpenCreateEmployee
 }) {
   const navItems = [
     { id: 'mailbox', label: 'My Tasks', icon: <InboxIcon /> },
     { id: 'all_tasks', label: 'All Tasks', icon: <ListIcon /> },
     { id: 'team', label: 'Team', icon: <UsersIcon /> },
+    { id: 'ai_plan', label: 'Plan with AI', icon: <SparklesIcon />, badge: 'AI' },
   ];
 
   return (
-    <aside className="w-56 bg-white border-r border-zinc-100 flex flex-col h-[calc(100vh-56px)] sticky top-[56px]">
-      {/* User identity block */}
-      <div className="px-4 pt-5 pb-4 border-b border-zinc-100">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-full bg-zinc-900 text-white text-xs font-bold flex items-center justify-center shrink-0">
-            {(user?.userName || 'A').substring(0, 1).toUpperCase()}
-          </div>
-          <div className="min-w-0">
-            <div className="text-xs font-semibold text-zinc-900 truncate">{user?.userName || 'Admin'}</div>
-            <div className="text-[11px] text-zinc-400 truncate">{user?.role || 'Admin'}</div>
-          </div>
-        </div>
-      </div>
+    <aside className="w-56 bg-white border-r border-zinc-100 flex flex-col h-full shrink-0">
 
-      {/* Action buttons */}
-      <div className="px-3 pt-4 space-y-1.5">
-        <button
-          onClick={onOpenCreateTask}
-          className="w-full flex items-center justify-center gap-2 py-2 px-3 bg-zinc-900 hover:bg-zinc-700 text-white text-xs font-semibold rounded-lg transition-colors active:scale-[0.98]"
-        >
-          <PlusIcon />
-          New Task
-        </button>
-
-        {user?.role === 'Admin' && (
+      {/* Action buttons (Removed + New Task button as requested) */}
+      {user?.role === 'Admin' && (
+        <div className="px-3 pt-4">
           <button
             onClick={onOpenCreateEmployee}
             className="w-full flex items-center justify-center gap-2 py-2 px-3 border border-zinc-200 hover:bg-zinc-50 text-zinc-700 text-xs font-medium rounded-lg transition-colors"
@@ -82,25 +70,38 @@ export default function DashboardSidebar({
             <PlusIcon />
             Add Member
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Navigation */}
-      <div className="px-3 mt-6 flex-1">
+      <div className="px-3 pt-4 flex-1">
         <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 px-2 mb-2">Workspace</p>
         <nav className="space-y-0.5">
           {navItems.map((item) => (
             <button
               key={item.id}
               onClick={() => onViewChange(item.id)}
-              className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-medium transition-all ${
+              className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-medium transition-all ${
                 activeView === item.id
                   ? 'bg-zinc-900 text-white'
                   : 'text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100'
               }`}
             >
-              <span className={activeView === item.id ? 'text-white' : 'text-zinc-400'}>{item.icon}</span>
-              {item.label}
+              <div className="flex items-center gap-2.5">
+                <span className={activeView === item.id ? 'text-white' : 'text-zinc-400'}>{item.icon}</span>
+                <span>{item.label}</span>
+              </div>
+              {item.badge && (
+                <span
+                  className={`text-[9px] font-bold px-1.5 py-0.2 rounded ${
+                    activeView === item.id
+                      ? 'bg-white/20 text-white'
+                      : 'bg-zinc-100 text-zinc-600 border border-zinc-200'
+                  }`}
+                >
+                  {item.badge}
+                </span>
+              )}
             </button>
           ))}
         </nav>

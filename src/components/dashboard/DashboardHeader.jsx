@@ -16,7 +16,7 @@ export default function DashboardHeader({ user }) {
   };
 
   return (
-    <header className="h-[56px] bg-white border-b border-zinc-100 px-5 flex items-center justify-between sticky top-0 z-40">
+    <header className="h-[56px] bg-white border-b border-zinc-100 px-5 flex items-center justify-between shrink-0">
       {/* Brand & Organization */}
       <div className="flex items-center gap-3">
         <Link href="/" className="flex items-center gap-2.5 group">

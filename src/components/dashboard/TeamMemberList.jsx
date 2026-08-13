@@ -33,7 +33,7 @@ export default function TeamMemberList({
   return (
     <div className="flex-1 flex flex-col h-full">
       {/* Section Header */}
-      <div className="flex items-center justify-between px-8 py-5 border-b border-zinc-100 bg-white sticky top-[56px] z-10">
+      <div className="flex items-center justify-between px-8 py-4 border-b border-zinc-100 bg-white shrink-0">
         <div>
           <h2 className="text-base font-semibold text-zinc-900">Team Members</h2>
           <p className="text-xs text-zinc-400 mt-0.5">Directory of registered organization members in CognoDB</p>
