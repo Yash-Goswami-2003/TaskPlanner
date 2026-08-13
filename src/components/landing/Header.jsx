@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { PRODUCT_NAME } from '../../lib/constants';
 
 export default function Header() {
@@ -8,14 +9,14 @@ export default function Header() {
     <header className="sticky top-0 z-40 w-full bg-white/90 backdrop-blur-md border-b border-neutral-200 px-6 py-4">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         {/* Brand Logo */}
-        <a href="#" className="flex items-center gap-2.5 group">
+        <Link href="/" className="flex items-center gap-2.5 group">
           <div className="w-8 h-8 rounded-md bg-neutral-900 flex items-center justify-center text-white font-bold text-sm shadow-xs group-hover:bg-neutral-800 transition">
             T
           </div>
           <span className="font-semibold text-neutral-900 text-base tracking-tight">
             {PRODUCT_NAME}
           </span>
-        </a>
+        </Link>
 
         {/* Navigation Links */}
         <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-neutral-600">
@@ -27,18 +28,18 @@ export default function Header() {
 
         {/* Action Buttons */}
         <div className="flex items-center gap-3">
-          <a
-            href="#planner-demo"
+          <Link
+            href="/login"
             className="text-sm font-medium text-neutral-600 hover:text-neutral-900 px-3 py-1.5 transition hidden sm:block"
           >
             Sign in
-          </a>
-          <a
-            href="#planner-demo"
+          </Link>
+          <Link
+            href="/signup"
             className="text-sm font-medium bg-neutral-900 hover:bg-neutral-800 text-white px-4 py-2 rounded-lg transition active:scale-[0.98] shadow-2xs"
           >
             Start for free
-          </a>
+          </Link>
         </div>
       </div>
     </header>

@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { PRODUCT_NAME } from '../../lib/constants';
 
 export default function Hero() {
@@ -26,18 +27,18 @@ export default function Hero() {
 
       {/* Call to Action Buttons */}
       <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto mb-16">
-        <a
-          href="#planner-demo"
+        <Link
+          href="/signup"
           className="w-full sm:w-auto px-7 py-3.5 bg-neutral-900 hover:bg-neutral-800 text-white font-medium text-sm rounded-xl shadow-xs transition active:scale-[0.98] text-center"
         >
           Start planning free
-        </a>
-        <a
-          href="#planner-demo"
+        </Link>
+        <Link
+          href="/login"
           className="w-full sm:w-auto px-7 py-3.5 bg-white hover:bg-neutral-50 text-neutral-900 font-medium text-sm rounded-xl border border-neutral-200 transition text-center"
         >
-          Try interactive planner
-        </a>
+          Log in to workspace
+        </Link>
       </div>
 
       {/* Subtle Team Metrics */}
