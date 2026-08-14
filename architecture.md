@@ -1,12 +1,14 @@
-# GraphTask AI — System Architecture & Engineering Specifications
+# Task Planner AI — System Architecture & Engineering Specifications
 
-This document outlines the detailed system architecture, engineering rationale, security design, and AI tool-calling agentic workflow implemented in **GraphTask AI**.
+This document outlines the detailed system architecture, engineering rationale, security design, and AI tool-calling agentic workflow implemented in **Task Planner AI**.
 
 ---
 
 ## 1. What We Have Built
 
-GraphTask AI is an enterprise project intelligence dashboard backed by **CognoDB** (managed graph database using openCypher over Bolt protocol) and integrated with **Google Gemini AI** (`gemini-2.5-flash`).
+Task Planner AI is an enterprise project intelligence dashboard backed by **CognoDB** (managed graph database using openCypher over Bolt protocol) and integrated with **Google Gemini AI** (`gemini-2.5-flash`).
+
+* **Repository**: [https://github.com/Yash-Goswami-2003/TaskPlanner](https://github.com/Yash-Goswami-2003/TaskPlanner)
 
 ```
                               ┌───────────────────────────────────────┐

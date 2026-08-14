@@ -99,17 +99,14 @@ export async function POST(req) {
     const userName = decoded.userName || 'Admin';
     const geminiApiKey = process.env.GEMINI_API_KEY;
 
-    const systemInstruction = `You are Task Planner AI, an intelligent project manager and conversational graph database assistant for organization "${companyName}".
-Authenticated User: "${userName}" (Role: ${decoded.role || 'Member'}).
+    const systemInstruction = `You are Task Planner AI for "${companyName}".
+You MUST reply in STRICTLY 2 to 3 BULLET POINTS MAXIMUM (Max 50 words total).
 
-PERSONALIZED RESPONSE GUIDELINES:
-1. Always present tasks using their FULL TASK TITLE alongside the ID (e.g., "**Implement OAuth2 Refresh Token Rotation** (\`TASK-713\`)").
-2. Always specify exact **Start Date** and **Due Date / Deadline** for tasks.
-3. When asked about a specific person (e.g., "What is Yash doing?", "Has Alice commented?"), call \`get_user_activity\` or \`search_tasks\` to detail:
-   - What tasks they are actively working on (\`In Progress\`, \`In Review\`, \`Done\`).
-   - Their exact due dates and deadlines.
-   - Any discussion comments they posted on tasks (including comment content and context).
-4. When asked about a specific task, use \`get_task_details\` to output its description and complete discussion comment stream.`;
+STRICT RULES:
+1. NO internal thinking, scratchpad, or self-reflections (e.g. "Wait...", "I need to...", "Total tasks..."). Output ONLY 2-3 short bullet lines for the user.
+2. NEVER mention tool names.
+3. FORMAT EACH LINE:
+   • **Task Title** (\`TASK-ID\`) | \`Status\` — Assigned: Name (Due: \`YYYY-MM-DD\`)`;
 
     let stepsExecuted = [];
 
@@ -130,7 +127,7 @@ PERSONALIZED RESPONSE GUIDELINES:
         const chat = model.startChat();
         const lastUserPrompt = messages[messages.length - 1]?.content || '';
 
-        stepsExecuted.push(`Gemini API: Generating intent analysis using ${geminiModel}...`);
+        stepsExecuted.push('Generating response...');
         let result = await chat.sendMessage(lastUserPrompt);
         let response = result.response;
         let lastToolResult = null;
@@ -164,18 +161,24 @@ PERSONALIZED RESPONSE GUIDELINES:
         let replyText = '';
         try {
           replyText = response.text();
-        } catch (e) {}
+        } catch (e) { }
 
         if (!replyText && lastToolResult) {
           if (lastToolResult.tasks) {
-            replyText = `### ${companyName} Graph Insights\n\nFound **${lastToolResult.tasks.length}** tasks in CognoDB:\n\n` +
-              lastToolResult.tasks.map(t => `- **${t.title}** (\`${t.id}\`) [\`${t.status}\`] (\`${t.priority}\`) — Assigned: ${t.assignees.join(', ') || 'Unassigned'}, Due: \`${t.dueDate}\``).join('\n');
+            replyText = lastToolResult.tasks.slice(0, 3).map(t => `• **${t.title}** (\`${t.id}\`) | \`${t.status}\` — Assigned: ${t.assignees.join(', ') || 'Unassigned'} (Due: \`${t.dueDate}\`)`).join('\n');
           } else {
-            replyText = `### ${companyName} Graph Insights\n\n` + JSON.stringify(lastToolResult, null, 2);
+            replyText = JSON.stringify(lastToolResult);
           }
         }
 
         if (replyText) {
+          // Hard cap: keep only the first 3-4 non-empty lines
+          replyText = replyText
+            .split('\n')
+            .filter((l) => l.trim().length > 0)
+            .slice(0, 4)
+            .join('\n');
+
           return NextResponse.json({
             success: true,
             engine: `Google Gemini (${geminiModel})`,
@@ -212,7 +215,7 @@ PERSONALIZED RESPONSE GUIDELINES:
       fallbackArgs = { query: taskMatch ? taskMatch[0] : lastMsg };
     }
 
-    stepsExecuted.push(`Graph Tool Execution: ${fallbackTool}(${JSON.stringify(fallbackArgs)})`);
+    stepsExecuted.push('Generating response...');
     const toolResult = await executeAiTool(fallbackTool, fallbackArgs, companyName, userName);
 
     let replyText = '';

@@ -1,15 +1,17 @@
-# GraphTask AI — AI-Powered Project & Graph Database Intelligence
+# Task Planner AI — AI-Powered Graph Database Project Intelligence
 
 [![Next.js](https://img.shields.io/badge/Next.js-16.3-black?style=flat-square&logo=next.js)](https://nextjs.org/)
 [![CognoDB](https://img.shields.io/badge/CognoDB-Graph_Database-emerald?style=flat-square)](https://cognodb.com/)
 [![Google Gemini](https://img.shields.io/badge/Google_Gemini-gemini--2.5--flash-blue?style=flat-square)](https://ai.google.dev/)
-[![License](https://img.shields.io/badge/License-MIT-zinc?style=flat-square)](LICENSE)
+[![GitHub Repo](https://img.shields.io/badge/GitHub-TaskPlanner-181717?style=flat-square&logo=github)](https://github.com/Yash-Goswami-2003/TaskPlanner)
 
-**GraphTask AI** is a minimalistic, high-performance project intelligence dashboard backed by **CognoDB** (a managed graph database speaking openCypher over Bolt) and powered by an **Agentic Google Gemini LLM Tool-Calling AI Assistant**.
+**Task Planner AI** is a minimalistic, high-performance project intelligence dashboard backed by **CognoDB** (a managed graph database speaking openCypher over Bolt) and powered by an **Agentic Google Gemini LLM Tool-Calling AI Assistant**.
+
+* **Repository**: [https://github.com/Yash-Goswami-2003/TaskPlanner](https://github.com/Yash-Goswami-2003/TaskPlanner)
 
 ---
 
-## 🎯 Why GraphTask AI is Required
+## 🎯 Why Task Planner AI is Required
 
 In modern software organizations, discovering *who* is working on *what*, tracking recursive task dependency blockages, and assessing project risks requires navigating complex webs of tasks, features, employees, and discussion comments.
 
@@ -27,7 +29,7 @@ In **CognoDB**, entities are **Nodes** and relationships are **Edges** stored as
 
 ---
 
-## ✨ Additional Value Delivered to Teams
+## ✨ Key Capabilities & Team Value
 
 1. **Agentic Conversational Intelligence ("Plan with AI")**:
    - Teammates can converse with their organization's knowledge graph using natural language.

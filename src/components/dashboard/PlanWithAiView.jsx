@@ -188,11 +188,10 @@ export default function PlanWithAiView({ user, onTaskCreated }) {
             </div>
 
             <div
-              className={`max-w-2xl p-4 rounded-xl text-xs leading-relaxed ${
-                msg.role === 'user'
+              className={`max-w-2xl p-4 rounded-xl text-xs leading-relaxed ${msg.role === 'user'
                   ? 'bg-zinc-900 text-white rounded-br-none shadow-sm'
                   : 'bg-white border border-zinc-200 text-zinc-800 rounded-bl-none shadow-2xs'
-              }`}
+                }`}
             >
               {msg.role === 'user' ? (
                 <p className="whitespace-pre-wrap">{msg.content}</p>
@@ -225,7 +224,7 @@ export default function PlanWithAiView({ user, onTaskCreated }) {
             </span>
             <div className="p-4 bg-white border border-zinc-200 rounded-xl rounded-bl-none text-xs text-zinc-500 flex items-center gap-2.5">
               <div className="w-3.5 h-3.5 border-2 border-zinc-900 border-t-transparent rounded-full animate-spin shrink-0" />
-              <span>Analyzing graph query & dispatching backend tools...</span>
+              <span>Generating response...</span>
             </div>
             {currentSteps.map((st, i) => (
               <span key={i} className="text-[9px] font-mono text-zinc-400 bg-zinc-100 px-2 py-0.5 rounded">
