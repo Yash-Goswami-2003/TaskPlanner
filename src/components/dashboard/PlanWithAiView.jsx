@@ -123,13 +123,13 @@ export default function PlanWithAiView({ user, onTaskCreated }) {
       });
 
       const data = await res.json();
-      if (res.ok && data.reply) {
+      if (res.ok && data.success && (data.reply || data.steps?.length)) {
         if (data.steps && data.steps.length > 0) {
           setCurrentSteps(data.steps);
         }
         setMessages((prev) => [
           ...prev,
-          { role: 'assistant', content: data.reply, steps: data.steps }
+          { role: 'assistant', content: data.reply || 'Completed request processing using CognoDB graph engine.', steps: data.steps }
         ]);
 
         if (onTaskCreated && (query.toLowerCase().includes('create') || query.toLowerCase().includes('add task'))) {
@@ -162,14 +162,14 @@ export default function PlanWithAiView({ user, onTaskCreated }) {
           </div>
           <div>
             <h2 className="text-sm font-semibold text-zinc-900">Plan with AI</h2>
-            <p className="text-[11px] text-zinc-400">Conversational Groq LLM Agent · CognoDB Tool Dispatcher</p>
+            <p className="text-[11px] text-zinc-400">Conversational Gemini LLM Agent · CognoDB Tool Dispatcher</p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
           <span className="inline-flex items-center gap-1.5 text-[10px] font-mono text-zinc-600 bg-zinc-100 border border-zinc-200 px-2.5 py-1 rounded-md font-semibold">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            Groq · llama-3.3-70b
+            Gemini · 2.5-flash
           </span>
         </div>
       </div>

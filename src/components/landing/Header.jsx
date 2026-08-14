@@ -23,7 +23,6 @@ export default function Header() {
           <a href="#planner-demo" className="hover:text-neutral-900 transition">Planner Preview</a>
           <a href="#ai-capabilities" className="hover:text-neutral-900 transition">AI Capabilities</a>
           <a href="#comparison" className="hover:text-neutral-900 transition">Why Task Planner</a>
-          <a href="#pricing" className="hover:text-neutral-900 transition">Pricing</a>
         </nav>
 
         {/* Action Buttons */}

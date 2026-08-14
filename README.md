@@ -2,10 +2,10 @@
 
 [![Next.js](https://img.shields.io/badge/Next.js-16.3-black?style=flat-square&logo=next.js)](https://nextjs.org/)
 [![CognoDB](https://img.shields.io/badge/CognoDB-Graph_Database-emerald?style=flat-square)](https://cognodb.com/)
-[![Groq AI](https://img.shields.io/badge/Groq_AI-llama--3.3--70b-blue?style=flat-square)](https://groq.com/)
+[![Google Gemini](https://img.shields.io/badge/Google_Gemini-gemini--2.5--flash-blue?style=flat-square)](https://ai.google.dev/)
 [![License](https://img.shields.io/badge/License-MIT-zinc?style=flat-square)](LICENSE)
 
-**GraphTask AI** is a minimalistic, high-performance project intelligence dashboard backed by **CognoDB** (a managed graph database speaking openCypher over Bolt) and powered by an **Agentic Groq LLM Tool-Calling AI Assistant**.
+**GraphTask AI** is a minimalistic, high-performance project intelligence dashboard backed by **CognoDB** (a managed graph database speaking openCypher over Bolt) and powered by an **Agentic Google Gemini LLM Tool-Calling AI Assistant**.
 
 ---
 
@@ -31,7 +31,7 @@ In **CognoDB**, entities are **Nodes** and relationships are **Edges** stored as
 
 1. **Agentic Conversational Intelligence ("Plan with AI")**:
    - Teammates can converse with their organization's knowledge graph using natural language.
-   - Powered by **Groq API** (`llama-3.3-70b-versatile` / `openai/gpt-oss-120b`).
+   - Powered by **Google Gemini API** (`gemini-2.5-flash`).
    - The LLM acts as an intent planner that dispatches authorized backend tools (`search_tasks`, `get_user_activity`, `get_task_details`, `create_task`).
 2. **Multi-Tenant Security Enforcement**:
    - The LLM **never touches CognoDB directly** and **never writes raw Cypher**.
@@ -94,8 +94,8 @@ COGNODB_PASSWORD=your_cognodb_password
 
 # Authentication & AI
 JWT_SECRET=your_jwt_secret_key_2026
-GROQ_API_KEY=gsk_your_groq_api_key
-GROQ_MODEL=llama-3.3-70b-versatile
+GEMINI_API_KEY=your_google_gemini_api_key
+GEMINI_MODEL=gemini-2.5-flash
 ```
 
 ### 3. Seed Database & Start Application

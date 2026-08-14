@@ -6,7 +6,7 @@ This document outlines the detailed system architecture, engineering rationale, 
 
 ## 1. What We Have Built
 
-GraphTask AI is an enterprise project intelligence dashboard backed by **CognoDB** (managed graph database using openCypher over Bolt protocol) and integrated with **Groq AI** (`llama-3.3-70b-versatile` / `openai/gpt-oss-120b`).
+GraphTask AI is an enterprise project intelligence dashboard backed by **CognoDB** (managed graph database using openCypher over Bolt protocol) and integrated with **Google Gemini AI** (`gemini-2.5-flash`).
 
 ```
                               ┌───────────────────────────────────────┐
@@ -22,7 +22,7 @@ GraphTask AI is an enterprise project intelligence dashboard backed by **CognoDB
                                       │                       │
                                       ▼                       ▼
                      ┌──────────────────────────┐   ┌──────────────────────────┐
-                     │ Data Layer (CognoDB DB)  │   │   Groq LLM Agent Engine  │
+                     │ Data Layer (CognoDB DB)  │   │  Gemini LLM Agent Engine │
                      │ Bolt 5.0+ · openCypher   │   │  Tool Call Router Loop   │
                      └──────────────────────────┘   └──────────────────────────┘
 ```
@@ -72,7 +72,7 @@ RETURN t1, t2
 
 ---
 
-## 4. AI & Groq Tool-Calling Agentic Architecture
+## 4. AI & Google Gemini Tool-Calling Agentic Architecture
 
 ```
 [ User Input Query ] 
@@ -81,7 +81,7 @@ RETURN t1, t2
 [ POST /api/ai/plan ] ──> (Extract JWT companyName & userName)
         │
         ▼
-[ Groq LLM Agent (llama-3.3-70b) ]
+[ Google Gemini Agent (gemini-2.5-flash) ]
         │
         ├──> (Tool Selection Request, e.g. get_user_activity)
         │
@@ -92,13 +92,13 @@ RETURN t1, t2
         │  3. Returns Authorized JSON Data
         │
         ▼
-[ Groq LLM Synthesizes Markdown Answer ] ──> [ Formatted UI Response ]
+[ Google Gemini LLM Synthesizes Markdown Answer ] ──> [ Formatted UI Response ]
 ```
 
 ### Core Security & Data Isolation Principles
 
 > 🔒 **Rule 1: No Direct Database Access by LLM**
-> The Groq LLM never directly connects to CognoDB and never generates unvetted Cypher strings. It acts purely as an intent planner that decides which predefined backend tool to call.
+> The Google Gemini LLM never directly connects to CognoDB and never generates unvetted Cypher strings. It acts purely as an intent planner that decides which predefined backend tool to call.
 
 > 🔒 **Rule 2: JWT-Enforced Tenant Scoping**
 > When the backend receives a tool request from the LLM (e.g. `search_tasks`), it ignores any organization arguments passed by the LLM. Instead, it retrieves `companyName` directly from the user's verified JWT token and injects `$companyName` into the parameterized Cypher query.

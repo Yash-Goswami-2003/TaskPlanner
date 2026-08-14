@@ -37,6 +37,11 @@ export default function DashboardContainer() {
     const storedUser = localStorage.getItem('task_planner_user');
     const storedToken = localStorage.getItem('task_planner_token');
 
+    if (!storedToken || !storedUser) {
+      router.push('/login');
+      return;
+    }
+
     if (storedUser) {
       try {
         setUser(JSON.parse(storedUser));
