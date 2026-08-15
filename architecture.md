@@ -1,13 +1,14 @@
 # Task Planner AI — System Architecture & Engineering Specifications
 
-This document outlines the detailed system architecture, engineering rationale, security design, and AI tool-calling agentic workflow implemented in **Task Planner AI**.
+This document details the software architecture, design principles, security model, and AI tool-calling workflow powering **Task Planner AI**.
 
 ---
 
-## 1. What We Have Built
+## 1. Executive Summary & Application Overview
 
-Task Planner AI is an enterprise project intelligence dashboard backed by **CognoDB** (managed graph database using openCypher over Bolt protocol) and integrated with **Google Gemini AI** (`gemini-2.5-flash`).
+Task Planner AI is a minimalistic, high-performance project intelligence dashboard. It replaces traditional SQL database backends with **CognoDB** (managed graph database using openCypher over Bolt protocol) and features a **Google Gemini AI Assistant** (`gemini-2.5-flash`) for conversational project management.
 
+* **Live Demo**: [https://task-planner-umber-two.vercel.app/](https://task-planner-umber-two.vercel.app/)
 * **Repository**: [https://github.com/Yash-Goswami-2003/TaskPlanner](https://github.com/Yash-Goswami-2003/TaskPlanner)
 
 ```
@@ -31,42 +32,43 @@ Task Planner AI is an enterprise project intelligence dashboard backed by **Cogn
 
 ---
 
-## 2. Why We Built It (Graph Database vs. Relational SQL)
+## 2. Why Task Planner AI Uses a Graph Database
 
-In traditional project management tools (like Jira), answering multi-hop organizational questions requires navigating complex relational schemas:
+Traditional project management tools store tasks, assignees, features, and comments in separate relational tables requiring multi-table SQL `JOIN` operations to assemble dashboard views or activity feeds.
 
-### SQL Approach (Relational Model)
-To find all tasks assigned to employees working on a specific feature, a SQL engine must perform multiple expensive `JOIN` operations across `employees`, `task_assignments`, `tasks`, and `features` tables. 
+In **CognoDB**, project entities are stored as **Nodes** and relationships are stored as native **Edges**:
 
-As the database grows, relational JOIN performance scales poorly ($\mathcal{O}(N \times M)$ memory lookups).
+### Key Graph Advantages
+1. **Index-Free Adjacency**: Connections between an `Employee`, their assigned `Task`, and their posted `Comment` follow direct memory pointers. Query traversal time depends only on connected relationships, not overall database size.
+2. **Natural Organizational Schema**: Graph structures match real-world project workflows (`Organization` -> `Employee` -> `Task` -> `Feature`).
 
-### CognoDB Approach (Graph Model)
-In **CognoDB**, connections between entities are stored as direct memory pointers. Traversing relationships is **index-free adjacency**, meaning query execution time depends strictly on the size of the subgraph traversed ($\mathcal{O}(k)$ where $k$ is the number of connected edges), independent of total database size.
+#### Example openCypher Queries
 
-#### Example: Multi-Hop Feature Traversal (3 Hops)
-```cypher
-MATCH (e:Employee)-[:ASSIGNED_TO]->(t:Task)-[:PART_OF]->(f:Feature {name: $featureName})
-RETURN e, t, f
-```
+* **Fetch Feature Workload**:
+  ```cypher
+  MATCH (e:Employee)-[:ASSIGNED_TO]->(t:Task)-[:PART_OF]->(f:Feature {name: $featureName})
+  RETURN e, t, f
+  ```
 
-#### Example: Recursive Blocker Dependency Traversal (1 to 5 Hops)
-```cypher
-MATCH (t1:Task {id: $taskId})<-[:BLOCKED_BY*1..5]-(t2:Task)
-RETURN t1, t2
-```
+* **Fetch Employee Activity & Comment Stream**:
+  ```cypher
+  MATCH (e:Employee {name: $userName})-[:ASSIGNED_TO]->(t:Task)
+  OPTIONAL MATCH (e)-[c:COMMENTED_ON]->(t)
+  RETURN e, t, c
+  ```
 
 ---
 
-## 3. How It Is Built: 3-Tier Architecture
+## 3. 3-Tier Technical Architecture
 
-### Tier 1: Presentation Layer (Next.js Client Components)
-- **Framework**: Next.js 16 App Router + React 19.
-- **Design System**: Monochromatic Linear/Apple aesthetic (`zinc-*` color palette, `#ffffff` background, `zinc-900` text, subtle `border-zinc-200`, vector SVGs, zero unicode emojis).
-- **Layout Architecture**: Fixed window layout (`h-screen overflow-hidden`) where the brand header (56px), subheader (38px), and sidebar (w-56) remain stationary, while only the main task/team workspace panel scrolls independently.
+### Tier 1: Presentation Layer (Next.js & TailwindCSS)
+- **Framework**: Next.js 16 App Router with React 19 Client Components.
+- **Design System**: Monochromatic Linear/Apple aesthetic using a muted `zinc-*` palette, fine borders (`border-zinc-200`), vector SVG iconography, and clean typography.
+- **Responsive Layout**: Fixed screen layout (`h-screen overflow-hidden`) with a stationary top header, subheader, and workspace sidebar, featuring a scrollable main workspace cards area.
 
-### Tier 2: Backend Logic Layer (Next.js API Routes)
-- **Authentication**: JWT token verification signed with 6-hour expiration (`expiresIn: '6h'`). Stored in `localStorage` and HTTP cookies (`max-age=21600`).
-- **Parameterized Cypher Execution**: Abstracted into `src/lib/db.js`. All queries strictly use parameters (`$companyName`, `$currentUserName`, `$taskId`) to prevent Cypher injection attacks.
+### Tier 2: Backend Logic & Security Layer (Next.js API Routes)
+- **Session Authentication**: JWT token verification signed with 6-hour expiration (`expiresIn: '6h'`). Tokens are stored in `localStorage` and HTTP cookies (`max-age=21600`).
+- **Parameterized openCypher Execution**: Managed via `src/lib/db.js`. All queries use `$params` (`$companyName`, `$userName`, `$taskId`) to guarantee zero risk of Cypher injection.
 
 ### Tier 3: Data Layer (CognoDB Cloud)
 - **Protocol**: Bolt protocol (`bolt+s://`).
@@ -74,7 +76,7 @@ RETURN t1, t2
 
 ---
 
-## 4. AI & Google Gemini Tool-Calling Agentic Architecture
+## 4. Agentic AI & Tool-Calling Architecture
 
 ```
 [ User Input Query ] 
@@ -94,31 +96,31 @@ RETURN t1, t2
         │  3. Returns Authorized JSON Data
         │
         ▼
-[ Google Gemini LLM Synthesizes Markdown Answer ] ──> [ Formatted UI Response ]
+[ Google Gemini LLM Synthesizes Concise Response ] ──> [ Formatted UI Output ]
 ```
 
-### Core Security & Data Isolation Principles
+### Tenant Isolation & Security Principles
 
 > 🔒 **Rule 1: No Direct Database Access by LLM**
-> The Google Gemini LLM never directly connects to CognoDB and never generates unvetted Cypher strings. It acts purely as an intent planner that decides which predefined backend tool to call.
+> The Google Gemini LLM never connects directly to CognoDB and cannot execute arbitrary Cypher statements. It functions strictly as an intent planner that requests predefined backend tools.
 
-> 🔒 **Rule 2: JWT-Enforced Tenant Scoping**
-> When the backend receives a tool request from the LLM (e.g. `search_tasks`), it ignores any organization arguments passed by the LLM. Instead, it retrieves `companyName` directly from the user's verified JWT token and injects `$companyName` into the parameterized Cypher query.
+> 🔒 **Rule 2: JWT-Enforced Multi-Tenancy**
+> When executing tool calls, the backend ignores any organization arguments passed by the LLM. It extracts `companyName` directly from the authenticated user's JWT payload, scoping every database query to `$companyName`.
 
-### Authorized AI Backend Tools
+### Predefined AI Backend Tools
 
-| Tool Name | Parameters | Purpose | Cypher Graph Traversal |
+| Tool Name | Parameters | Description | Graph Traversal |
 | :--- | :--- | :--- | :--- |
 | **`search_users`** | `query`, `role` | Finds team members in the company directory. | `(e:Employee)-[:MEMBER_OF]->(o:Organization {name: $companyName})` |
-| **`get_user_activity`** | `userName` | Gets person activity, tasks, deadlines, and posted comments. | `(e:Employee)-[:ASSIGNED_TO]->(t:Task)` & `(e)-[:COMMENTED_ON]->(t)` |
-| **`get_task_details`** | `query` | Gets full task description, deadlines, assignees, and discussion comments. | `(t:Task)<-[:COMMENTED_ON]-(e:Employee)` |
-| **`search_tasks`** | `assigneeName`, `status`, `priority`, `query` | Searches tasks filtered by assignee, status, or keyword. | `(o)<-[:BELONGS_TO]-(f)<-[:PART_OF]-(t)` |
+| **`get_user_activity`** | `userName` | Gets employee tasks, deadlines, and discussion comments. | `(e:Employee)-[:ASSIGNED_TO]->(t:Task)` & `(e)-[:COMMENTED_ON]->(t)` |
+| **`get_task_details`** | `query` | Retrieves full task specs, dates, and comment threads. | `(t:Task)<-[:COMMENTED_ON]-(e:Employee)` |
+| **`search_tasks`** | `assigneeName`, `status`, `priority`, `query` | Searches tasks by status, priority, or keyword. | `(o)<-[:BELONGS_TO]-(f)<-[:PART_OF]-(t)` |
 | **`get_project_summary`** | *none* | Computes task count, team count, and status breakdown. | `(e)-[:MEMBER_OF]->(o)` & task aggregations |
 | **`create_task`** | `title`, `description`, `priority`, `startDate`, `dueDate`, `assignees` | Creates a new task node and links `(e)-[:ASSIGNED_TO]->(t)`. | `CREATE (t:Task ...)` & `MERGE (e)-[:ASSIGNED_TO]->(t)` |
 
 ---
 
-## 5. Summary Principles (KISS & DRY)
+## 5. Design & Engineering Principles (KISS & DRY)
 
-* **KISS (Keep It Simple, Stupid)**: Standardized components, centralized database helpers, clean multi-turn tool loops.
-* **DRY (Don't Repeat Yourself)**: CognoDB driver singleton in `src/lib/db.js`, reusable JWT utilities in `src/lib/jwt.js`, unified tool schemas in `src/lib/aiTools.js`.
+* **KISS (Keep It Simple, Stupid)**: Clean separation of concerns, standardized components, and explicit 2–3 line limit on AI response outputs.
+* **DRY (Don't Repeat Yourself)**: CognoDB driver singleton in `src/lib/db.js`, unified JWT verification in `src/lib/jwt.js`, and central tool definitions in `src/lib/aiTools.js`.

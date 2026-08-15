@@ -5,46 +5,44 @@
 [![Google Gemini](https://img.shields.io/badge/Google_Gemini-gemini--2.5--flash-blue?style=flat-square)](https://ai.google.dev/)
 [![GitHub Repo](https://img.shields.io/badge/GitHub-TaskPlanner-181717?style=flat-square&logo=github)](https://github.com/Yash-Goswami-2003/TaskPlanner)
 
-**Task Planner AI** is a minimalistic, high-performance project intelligence dashboard backed by **CognoDB** (a managed graph database speaking openCypher over Bolt) and powered by an **Agentic Google Gemini LLM Tool-Calling AI Assistant**.
+**Task Planner AI** is a modern, minimalistic project management platform backed by **CognoDB** (a managed graph database speaking openCypher over Bolt) and powered by an **Agentic Google Gemini AI Assistant**.
 
-* **Repository**: [https://github.com/Yash-Goswami-2003/TaskPlanner](https://github.com/Yash-Goswami-2003/TaskPlanner)
-
----
-
-## 🎯 Why Task Planner AI is Required
-
-In modern software organizations, discovering *who* is working on *what*, tracking recursive task dependency blockages, and assessing project risks requires navigating complex webs of tasks, features, employees, and discussion comments.
-
-### ❌ The Relational Database Bottleneck (SQL)
-Traditional relational databases rely on foreign keys and heavy `JOIN` operations. Asking multi-hop questions like:
-> *"What downstream features will be delayed if database migration is blocked?"*
-> *"Which tasks assigned to Yash have recent comments about OAuth token rotation?"*
-
-requires writing 4 to 5 nested SQL `JOIN` statements. As database tables grow into millions of rows, these JOINs degrade performance exponentially.
-
-### ✅ The Graph Database Solution (CognoDB)
-In **CognoDB**, entities are **Nodes** and relationships are **Edges** stored as direct memory pointers.
-* Multi-hop path traversals follow index-free pointers in constant time $\mathcal{O}(1)$ per hop.
-* Recursive blockage chains (`-[:BLOCKED_BY*1..5]->`) are resolved natively in a single Cypher query.
+* **Live Application Demo**: [https://task-planner-umber-two.vercel.app/](https://task-planner-umber-two.vercel.app/)
+* **GitHub Repository**: [https://github.com/Yash-Goswami-2003/TaskPlanner](https://github.com/Yash-Goswami-2003/TaskPlanner)
 
 ---
 
-## ✨ Key Capabilities & Team Value
+## 🚀 Product Overview & Core Features
 
-1. **Agentic Conversational Intelligence ("Plan with AI")**:
-   - Teammates can converse with their organization's knowledge graph using natural language.
-   - Powered by **Google Gemini API** (`gemini-2.5-flash`).
-   - The LLM acts as an intent planner that dispatches authorized backend tools (`search_tasks`, `get_user_activity`, `get_task_details`, `create_task`).
-2. **Multi-Tenant Security Enforcement**:
-   - The LLM **never touches CognoDB directly** and **never writes raw Cypher**.
-   - The backend extracts `companyName` directly from the authenticated user's JWT token, binding it to every Cypher query to guarantee 100% data isolation between companies.
-3. **Streamlined Monochromatic UI/UX**:
-   - Modern Linear/Apple minimalist design system (`zinc-*` color palette, fine borders, standardized vertical heights, SVG icons).
-   - 2-column task grid cards, identity member directory, and Notion-style detail view with live status pills and comment threads.
+Task Planner AI combines a clean, Linear-inspired project dashboard with graph-backed intelligence to help teams collaborate, track tasks, and query work activity seamlessly.
+
+### 1. Minimalist Monochromatic Dashboard
+* **2-Column Task Grid**: Clean card layout displaying task titles, IDs (`TASK-713`), status pills (`To Do`, `In Progress`, `In Review`, `Done`), priority tags (`P1`–`P4`), stacked assignee avatars, and due dates.
+* **Notion-Style Task Detail View**: Deep-dive into individual tasks to inspect full descriptions, assignees, timelines, and live discussion comment streams.
+* **Team Directory View**: Browse workspace members, roles, and assigned workloads across the organization.
+
+### 2. Conversational "Plan with AI" Assistant
+* **Powered by Google Gemini 2.5 Flash**: Users can query project status, ask what team members are doing, or create new tasks using natural language.
+* **Agentic Tool Calling**: Gemini acts as an intent router that calls secure backend tools (`search_tasks`, `get_user_activity`, `get_task_details`, `create_task`) to fetch real records from CognoDB.
+* **Ultra-Concise Output**: Delivers executive 2–3 line bullet summaries with zero fluff or internal scratchpad leakage.
+
+### 3. Multi-Tenant Graph Security & Auth
+* **JWT Session Expiration**: 6-hour authenticated sessions backed by `localStorage` and HTTP cookies (`max-age=21600`).
+* **Strict Organization Isolation**: The AI agent **never writes raw Cypher queries** or accesses the database directly. The backend automatically extracts `companyName` from the user's verified JWT token and binds `$companyName` to every query, ensuring total tenant isolation (`Wexa.ai`, `Acme Tech`, `Nexus FinTech`).
 
 ---
 
-## 📐 Graph Data Model
+## 📐 Why a Graph Database for Project Planning?
+
+In traditional relational databases (SQL), connecting employees, tasks, features, and comments requires writing multi-table `JOIN` queries across separate relational tables. 
+
+In **Task Planner AI**, relationships are native graph edges:
+* **Index-Free Adjacency**: Traversal between an `Employee`, their `ASSIGNED_TO` tasks, and their `COMMENTED_ON` activity follows direct memory pointers without expensive index lookups.
+* **Rich Activity Mapping**: Instantly retrieve an employee's full workload, feature context, and discussion thread in a single openCypher query pattern.
+
+---
+
+## 📊 Graph Data Model
 
 ```mermaid
 graph TD
@@ -53,7 +51,6 @@ graph TD
     Emp -->|ASSIGNED_TO| Task[Task]
     Task -->|PART_OF| Feat[Feature]
     Feat -->|BELONGS_TO| Org
-    Task -->|BLOCKED_BY| SubTask[Task]
     Emp -->|COMMENTED_ON| Task
 ```
 
@@ -65,52 +62,52 @@ graph TD
 
 ---
 
-## 🗝️ Test Credentials & Seeding
+## 🗝️ Test Login Credentials
 
-The database comes pre-seeded with multi-tenant mock companies:
+The application comes pre-seeded with multi-tenant workspace data:
 
-| Company Name | User Name | Role | Password |
+| Company Name | Username | Role | Password |
 | :--- | :--- | :--- | :--- |
-| **Wexa.ai** | Admin | Admin | `admin123` |
-| **Wexa.ai** | Yash | Lead AI Engineer | `yash123` |
-| **Wexa.ai** | Alice | Lead Frontend Engineer | `alice123` |
-| **Wexa.ai** | Bob | Backend Engineer | `bob123` |
-| **Acme Tech** | Sarah | Tech Lead | `sarah123` |
-| **Nexus FinTech**| Admin | Admin | `admin123` |
+| **Wexa.ai** | **Admin** | Admin | `admin123` |
+| **Wexa.ai** | **Yash** | Lead AI Engineer | `yash123` |
+| **Wexa.ai** | **Alice** | Lead Frontend Engineer | `alice123` |
+| **Wexa.ai** | **Bob** | Backend Engineer | `bob123` |
+| **Acme Tech** | **Sarah** | Tech Lead | `sarah123` |
+| **Nexus FinTech** | **Admin** | Admin | `admin123` |
 
 ---
 
-## ⚡ Quick Start & Run Instructions
+## ⚡ Quick Start & Setup Instructions
 
 ### 1. Prerequisites
 - Node.js 18+ installed
-- CognoDB Cloud free instance connection parameters (`COGNODB_URI`, `COGNODB_USER`, `COGNODB_PASSWORD`)
+- CognoDB Cloud free instance connection URI & credentials
 
-### 2. Environment Setup (`.env.local`)
-Create `.env.local` in the project root:
+### 2. Environment Configuration (`.env.local`)
+Create a `.env.local` file in the project root:
 ```env
 # CognoDB Graph Database
-COGNODB_URI=bolt+s://<your-instance>.databases.cognodb.com
-COGNODB_USER=neo4j
+COGNODB_URI=bolt+s://<your-instance>.databases.cognodb.cloud
+COGNODB_USER=cognodb
 COGNODB_PASSWORD=your_cognodb_password
 
 # Authentication & AI
-JWT_SECRET=your_jwt_secret_key_2026
+JWT_SECRET=task_planner_super_secret_jwt_key_2026
 GEMINI_API_KEY=your_google_gemini_api_key
 GEMINI_MODEL=gemini-2.5-flash
 ```
 
-### 3. Seed Database & Start Application
+### 3. Seed Database & Launch
 ```bash
-# Seed CognoDB graph data
+# Seed CognoDB graph structure
 node seed.js
 
-# Run Next.js dev server
+# Launch Next.js development server
 npm run dev
 ```
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
 
-## 📖 Further Documentation
-For detailed engineering specs, tool calling workflows, and query architectural breakdowns, refer to [architecture.md](file:///Users/yashgoswami/Documents/projects/assignment/architecture.md).
+## 📖 System Architecture & Specs
+For deep-dive technical specs on JWT multi-tenancy, parameterized openCypher queries, and tool execution loops, read [architecture.md](file:///Users/yashgoswami/Documents/projects/assignment/architecture.md).

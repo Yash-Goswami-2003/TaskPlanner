@@ -18,11 +18,21 @@ export async function GET(req) {
     `;
     const res = await executeCypherQuery(cypher, { taskId });
 
-    const comments = res.records.map((rec) => ({
-      author: rec.get('author'),
-      content: rec.get('content'),
-      createdAt: rec.get('createdAt')
-    }));
+    // Deduplicate comments to prevent multi-relationship duplication
+    const seen = new Set();
+    const comments = [];
+
+    for (const rec of res.records) {
+      const author = rec.get('author');
+      const content = rec.get('content');
+      const createdAt = rec.get('createdAt');
+      const key = `${author}:${content}:${createdAt}`;
+
+      if (!seen.has(key)) {
+        seen.add(key);
+        comments.push({ author, content, createdAt });
+      }
+    }
 
     return NextResponse.json({ comments });
   } catch (error) {
@@ -47,15 +57,20 @@ export async function POST(req) {
     }
 
     const userName = decoded.userName;
+    const companyName = decoded.companyName;
 
+    // Multi-tenant scoped MATCH with LIMIT 1 to prevent duplicate relationship creation
     const cypher = `
-      MATCH (e:Employee {name: $userName}), (t:Task {id: $taskId})
+      MATCH (e:Employee {name: $userName})-[:MEMBER_OF]->(o:Organization {name: $companyName})
+      MATCH (t:Task {id: $taskId})
+      WITH e, t LIMIT 1
       CREATE (e)-[r:COMMENTED_ON {content: $content, createdAt: timestamp()}]->(t)
       RETURN r
     `;
 
     await executeCypherQuery(cypher, {
       userName,
+      companyName,
       taskId,
       content: content.trim()
     });

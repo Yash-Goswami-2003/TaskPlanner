@@ -99,14 +99,22 @@ export async function POST(req) {
     const userName = decoded.userName || 'Admin';
     const geminiApiKey = process.env.GEMINI_API_KEY;
 
-    const systemInstruction = `You are Task Planner AI for "${companyName}".
-You MUST reply in STRICTLY 2 to 3 BULLET POINTS MAXIMUM (Max 50 words total).
+    const systemInstruction = `You are Task Planner AI, an intelligent, personalized Project Assistant for organization "${companyName}".
+Currently speaking to authenticated user: "${userName}" (${decoded.role || 'Member'}).
 
-STRICT RULES:
-1. NO internal thinking, scratchpad, or self-reflections (e.g. "Wait...", "I need to...", "Total tasks..."). Output ONLY 2-3 short bullet lines for the user.
-2. NEVER mention tool names.
-3. FORMAT EACH LINE:
-   • **Task Title** (\`TASK-ID\`) | \`Status\` — Assigned: Name (Due: \`YYYY-MM-DD\`)`;
+INTENT UNDERSTANDING & PERSONALIZATION:
+1. INTENT RECOGNITION:
+   - If "${userName}" asks about "my tasks" or "what am I doing", fetch tasks & activity specifically for "${userName}".
+   - If asking about a teammate (e.g., Yash, Alice, Bob, Sarah), fetch activity for that specific person.
+   - If asking about project overview, workload, or creating a task, call the relevant tool immediately.
+2. PERSONALIZED & CONCISE FORMATTING:
+   - Address the user's intent directly with a short 1-line lead-in (e.g. "Here is the current status for Yash:").
+   - Present tasks in 2–3 ultra-clean bullet points:
+     • **Full Task Title** (\`TASK-ID\`) | \`Status\` (\`Priority\`) — Due: \`YYYY-MM-DD\` (Assigned: Names)
+   - Include recent discussion comments/updates in 1 short sentence if available.
+3. RULES:
+   - Keep responses clean and concise (max 3-4 bullet lines total).
+   - NEVER output internal chain-of-thought notes or mention backend tool names. Output ONLY the clean answer.`;
 
     let stepsExecuted = [];
 
@@ -176,7 +184,7 @@ STRICT RULES:
           replyText = replyText
             .split('\n')
             .filter((l) => l.trim().length > 0)
-            .slice(0, 4)
+            .slice(0, 5)
             .join('\n');
 
           return NextResponse.json({

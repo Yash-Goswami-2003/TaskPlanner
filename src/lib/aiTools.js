@@ -209,12 +209,19 @@ export async function executeAiTool(toolName, args, companyName, currentUserName
         `;
         const commentsRes = await executeCypherQuery(commentsCypher, { companyName, targetUserName });
 
-        const comments = commentsRes.records.map((r) => ({
-          taskId: r.get('taskId'),
-          taskTitle: r.get('taskTitle'),
-          content: r.get('content'),
-          createdAt: r.get('createdAt')
-        }));
+        const seenComm = new Set();
+        const comments = [];
+        for (const r of commentsRes.records) {
+          const taskId = r.get('taskId');
+          const taskTitle = r.get('taskTitle');
+          const content = r.get('content');
+          const createdAt = r.get('createdAt');
+          const key = `${taskId}:${content}`;
+          if (!seenComm.has(key)) {
+            seenComm.add(key);
+            comments.push({ taskId, taskTitle, content, createdAt });
+          }
+        }
 
         return {
           success: true,
@@ -254,7 +261,17 @@ export async function executeAiTool(toolName, args, companyName, currentUserName
         const t = r.get('t').properties;
         const assignees = (r.get('assignees') || []).filter(Boolean);
         const rawComments = r.get('comments') || [];
-        const comments = rawComments.filter(c => c && c.author && c.content);
+        const seenTaskComm = new Set();
+        const comments = [];
+        for (const c of rawComments) {
+          if (c && c.author && c.content) {
+            const key = `${c.author}:${c.content}`;
+            if (!seenTaskComm.has(key)) {
+              seenTaskComm.add(key);
+              comments.push(c);
+            }
+          }
+        }
 
         return {
           success: true,

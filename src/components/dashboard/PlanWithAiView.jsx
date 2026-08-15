@@ -166,12 +166,6 @@ export default function PlanWithAiView({ user, onTaskCreated }) {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 text-[10px] font-mono text-zinc-600 bg-zinc-100 border border-zinc-200 px-2.5 py-1 rounded-md font-semibold">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            Gemini · 2.5-flash
-          </span>
-        </div>
       </div>
 
       {/* Conversation Thread */}
