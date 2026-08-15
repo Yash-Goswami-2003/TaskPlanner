@@ -16,9 +16,9 @@ const SparklesIcon = () => (
 );
 
 const presetPrompts = [
-  'What tasks are currently in progress?',
+  'What am I working on?',
   'Summarize project status and team workload',
-  'Who is on our team?',
+  'What is Yash doing this week?',
   'Create a P1 task to optimize API performance assigned to Yash'
 ];
 
@@ -81,7 +81,7 @@ export default function PlanWithAiView({ user, onTaskCreated }) {
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
-      content: `Hello **${user?.userName || 'Admin'}**! I am your CognoDB Graph Intelligence Assistant for **${user?.companyName || 'Wexa.ai'}**.\n\nI can analyze team tasks, search graph relationships, and automatically create tasks using backend API tools.\n\nHow can I assist your project today?`
+      content: `Hello **${user?.userName || 'Admin'}**. I can help you understand your tasks, check teammate activity, summarize project progress, or create new work for **${user?.companyName || 'Wexa.ai'}**.\n\nWhat would you like to plan today?`
     }
   ]);
   const [inputQuery, setInputQuery] = useState('');
@@ -107,7 +107,7 @@ export default function PlanWithAiView({ user, onTaskCreated }) {
     setMessages(updatedMessages);
     setInputQuery('');
     setIsLoading(true);
-    setCurrentSteps(['Analyzing prompt intent & resolving company context...']);
+    setCurrentSteps(['Understanding your request...']);
 
     try {
       const token = localStorage.getItem('task_planner_token');
@@ -129,7 +129,7 @@ export default function PlanWithAiView({ user, onTaskCreated }) {
         }
         setMessages((prev) => [
           ...prev,
-          { role: 'assistant', content: data.reply || 'Completed request processing using CognoDB graph engine.', steps: data.steps }
+          { role: 'assistant', content: data.reply || 'I finished checking the workspace, but could not format a useful answer.' }
         ]);
 
         if (onTaskCreated && (query.toLowerCase().includes('create') || query.toLowerCase().includes('add task'))) {
@@ -138,13 +138,13 @@ export default function PlanWithAiView({ user, onTaskCreated }) {
       } else {
         setMessages((prev) => [
           ...prev,
-          { role: 'assistant', content: `⚠️ ${data.error || 'Failed to process AI plan request.'}` }
+          { role: 'assistant', content: data.error || 'I could not process that request. Please try a more specific person, task, or status question.' }
         ]);
       }
     } catch (err) {
       setMessages((prev) => [
         ...prev,
-        { role: 'assistant', content: '⚠️ Connection error. Please check your internet or retry.' }
+        { role: 'assistant', content: 'Connection error. Please check your internet or retry.' }
       ]);
     } finally {
       setIsLoading(false);
@@ -162,7 +162,7 @@ export default function PlanWithAiView({ user, onTaskCreated }) {
           </div>
           <div>
             <h2 className="text-sm font-semibold text-zinc-900">Plan with AI</h2>
-            <p className="text-[11px] text-zinc-400">Conversational Gemini LLM Agent · CognoDB Tool Dispatcher</p>
+            <p className="text-[11px] text-zinc-400">Personal workspace assistant for tasks, teammates, and planning</p>
           </div>
         </div>
 
@@ -194,19 +194,6 @@ export default function PlanWithAiView({ user, onTaskCreated }) {
               )}
             </div>
 
-            {/* Tool execution steps log badge */}
-            {msg.steps && msg.steps.length > 0 && (
-              <div className="mt-1.5 flex flex-wrap gap-1 max-w-2xl">
-                {msg.steps.map((st, sIdx) => (
-                  <span
-                    key={sIdx}
-                    className="text-[9px] font-mono text-zinc-400 bg-zinc-100 border border-zinc-200 px-2 py-0.5 rounded"
-                  >
-                    ⚡ {st}
-                  </span>
-                ))}
-              </div>
-            )}
           </div>
         ))}
 
@@ -222,7 +209,7 @@ export default function PlanWithAiView({ user, onTaskCreated }) {
             </div>
             {currentSteps.map((st, i) => (
               <span key={i} className="text-[9px] font-mono text-zinc-400 bg-zinc-100 px-2 py-0.5 rounded">
-                ⚡ {st}
+                {st}
               </span>
             ))}
           </div>
@@ -241,7 +228,7 @@ export default function PlanWithAiView({ user, onTaskCreated }) {
               onClick={() => handleSendMessage(chip)}
               className="text-[11px] font-medium text-zinc-600 hover:text-zinc-900 bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 px-3 py-1 rounded-full whitespace-nowrap transition-colors"
             >
-              ✨ {chip}
+              {chip}
             </button>
           ))}
         </div>

@@ -38,6 +38,7 @@ export async function GET(req) {
           description: t.description || '',
           priority: t.priority || 'P1',
           status: t.status || 'In Progress',
+          startDate: t.startDate || new Date().toISOString().split('T')[0],
           dueDate: t.dueDate || new Date().toISOString().split('T')[0],
           createdAt: t.createdAt,
           assignees: assignees.filter(Boolean)
@@ -83,6 +84,7 @@ export async function GET(req) {
         description: t.description || '',
         priority: t.priority || 'P1',
         status: t.status || 'In Progress',
+        startDate: t.startDate || new Date().toISOString().split('T')[0],
         dueDate: t.dueDate || new Date().toISOString().split('T')[0],
         createdAt: t.createdAt,
         assignees: assignees.filter(Boolean)

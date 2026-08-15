@@ -1,18 +1,21 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import DashboardHeader from './DashboardHeader';
 import DashboardSubheader from './DashboardSubheader';
 import DashboardSidebar from './DashboardSidebar';
 import MailboxTaskList from './MailboxTaskList';
 import TeamMemberList from './TeamMemberList';
 import PlanWithAiView from './PlanWithAiView';
+import CalendarView from './CalendarView';
 import CreateTaskModal from './CreateTaskModal';
 import CreateEmployeeModal from './CreateEmployeeModal';
 
 export default function DashboardContainer() {
+  const router = useRouter();
   const [user, setUser] = useState({ companyName: 'Wexa.ai', userName: 'Yash', role: 'DB Admin' });
-  const [activeView, setActiveView] = useState('mailbox'); // 'mailbox' | 'all_tasks' | 'team' | 'ai_plan'
+  const [activeView, setActiveView] = useState('mailbox'); // 'mailbox' | 'all_tasks' | 'calendar' | 'team' | 'ai_plan'
   const [tasks, setTasks] = useState([]);
   const [teamMembers, setTeamMembers] = useState([]);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
@@ -115,6 +118,12 @@ export default function DashboardContainer() {
             <PlanWithAiView
               user={user}
               onTaskCreated={() => fetchTasks()}
+            />
+          ) : activeView === 'calendar' ? (
+            <CalendarView
+              tasks={tasks}
+              members={teamMembers}
+              user={user}
             />
           ) : (
             <MailboxTaskList

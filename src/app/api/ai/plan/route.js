@@ -97,24 +97,31 @@ export async function POST(req) {
 
     const companyName = decoded.companyName || 'Wexa.ai';
     const userName = decoded.userName || 'Admin';
+    const userRole = decoded.role || 'Member';
     const geminiApiKey = process.env.GEMINI_API_KEY;
+    const today = new Date().toISOString().split('T')[0];
 
     const systemInstruction = `You are Task Planner AI, an intelligent, personalized Project Assistant for organization "${companyName}".
-Currently speaking to authenticated user: "${userName}" (${decoded.role || 'Member'}).
+You are speaking to "${userName}" (${userRole}). Today's date is ${today}.
 
-INTENT UNDERSTANDING & PERSONALIZATION:
-1. INTENT RECOGNITION:
-   - If "${userName}" asks about "my tasks" or "what am I doing", fetch tasks & activity specifically for "${userName}".
-   - If asking about a teammate (e.g., Yash, Alice, Bob, Sarah), fetch activity for that specific person.
-   - If asking about project overview, workload, or creating a task, call the relevant tool immediately.
-2. PERSONALIZED & CONCISE FORMATTING:
-   - Address the user's intent directly with a short 1-line lead-in (e.g. "Here is the current status for Yash:").
-   - Present tasks in 2–3 ultra-clean bullet points:
-     • **Full Task Title** (\`TASK-ID\`) | \`Status\` (\`Priority\`) — Due: \`YYYY-MM-DD\` (Assigned: Names)
-   - Include recent discussion comments/updates in 1 short sentence if available.
-3. RULES:
-   - Keep responses clean and concise (max 3-4 bullet lines total).
-   - NEVER output internal chain-of-thought notes or mention backend tool names. Output ONLY the clean answer.`;
+Your job is to behave like a calm project lead who knows this workspace personally.
+
+PERSONALIZATION RULES:
+- If the user says "my", "me", "I", "what am I doing", or "my tasks", they mean "${userName}". Use get_user_activity for "${userName}".
+- If the user asks about a teammate by name, use get_user_activity for that teammate.
+- If the user asks "who", "team", "members", or roles, use search_users.
+- If the user asks about project status, workload, progress, blockers, overdue, priorities, or active work, use search_tasks or get_project_summary.
+- If the user names a task id/title, use get_task_details.
+- If the user asks to create/add/assign a task, use create_task. Infer reasonable missing fields from the request, but do not invent extra requirements.
+
+ANSWER STYLE:
+- Never mention tools, function names, JSON, keys, database internals, "CognoDB", "Graph Dispatcher", or raw API fields.
+- Start with a short personalized line, for example: "Here is what you are working on, ${userName}:" or "Alice is currently focused on:"
+- Prefer 2-4 short bullets. Use exact task titles, IDs, status, priority, assignees, start date, and due date when available.
+- For user activity, group the answer around what the person is doing now, what is due next, and any recent comment if available.
+- For summaries, highlight the most useful status counts or risks, not every raw number.
+- If no data is found, say that clearly and suggest a concrete next question.
+- Keep the answer polished and human. No debug language. No internal reasoning.`;
 
     let stepsExecuted = [];
 
@@ -135,7 +142,7 @@ INTENT UNDERSTANDING & PERSONALIZATION:
         const chat = model.startChat();
         const lastUserPrompt = messages[messages.length - 1]?.content || '';
 
-        stepsExecuted.push('Generating response...');
+        stepsExecuted.push('Understanding your request...');
         let result = await chat.sendMessage(lastUserPrompt);
         let response = result.response;
         let lastToolResult = null;
@@ -148,7 +155,7 @@ INTENT UNDERSTANDING & PERSONALIZATION:
             const call = calls[0];
             const toolName = call.name;
             const args = call.args || {};
-            stepsExecuted.push(`Gemini Tool Call: ${toolName}(${JSON.stringify(args)})`);
+            stepsExecuted.push('Checking your workspace data...');
 
             lastToolResult = await executeAiTool(toolName, args, companyName, userName);
 
@@ -173,9 +180,9 @@ INTENT UNDERSTANDING & PERSONALIZATION:
 
         if (!replyText && lastToolResult) {
           if (lastToolResult.tasks) {
-            replyText = lastToolResult.tasks.slice(0, 3).map(t => `• **${t.title}** (\`${t.id}\`) | \`${t.status}\` — Assigned: ${t.assignees.join(', ') || 'Unassigned'} (Due: \`${t.dueDate}\`)`).join('\n');
+            replyText = lastToolResult.tasks.slice(0, 3).map(t => `- **${t.title}** (\`${t.id}\`) | \`${t.status}\` (\`${t.priority}\`) — ${t.startDate} to ${t.dueDate}; assigned to ${t.assignees.join(', ') || 'Unassigned'}.`).join('\n');
           } else {
-            replyText = JSON.stringify(lastToolResult);
+            replyText = 'I found the workspace data, but could not format it cleanly. Try asking about a specific person, task, or project status.';
           }
         }
 
@@ -207,11 +214,27 @@ INTENT UNDERSTANDING & PERSONALIZATION:
     let fallbackArgs = {};
 
     const nameMatch = lastMsg.match(/yash|alice|bob|admin|marcus|sarah|elena|ken/i);
-    if (nameMatch) {
+    const asksAboutSelf = /\b(my|me|i|mine)\b/.test(lastMsg) || lastMsg.includes('what am i doing');
+    if (asksAboutSelf) {
+      fallbackTool = 'get_user_activity';
+      fallbackArgs = { userName };
+    } else if (nameMatch) {
       fallbackTool = 'get_user_activity';
       fallbackArgs = { userName: nameMatch[0] };
     } else if (lastMsg.includes('user') || lastMsg.includes('team') || lastMsg.includes('who')) {
       fallbackTool = 'search_users';
+    } else if (lastMsg.includes('in progress')) {
+      fallbackTool = 'search_tasks';
+      fallbackArgs = { status: 'In Progress' };
+    } else if (lastMsg.includes('to do')) {
+      fallbackTool = 'search_tasks';
+      fallbackArgs = { status: 'To Do' };
+    } else if (lastMsg.includes('review')) {
+      fallbackTool = 'search_tasks';
+      fallbackArgs = { status: 'In Review' };
+    } else if (lastMsg.includes('done') || lastMsg.includes('completed')) {
+      fallbackTool = 'search_tasks';
+      fallbackArgs = { status: 'Done' };
     } else if (lastMsg.includes('summary') || lastMsg.includes('progress') || lastMsg.includes('status')) {
       fallbackTool = 'get_project_summary';
     } else if (lastMsg.includes('create') || lastMsg.includes('add task')) {
@@ -223,20 +246,42 @@ INTENT UNDERSTANDING & PERSONALIZATION:
       fallbackArgs = { query: taskMatch ? taskMatch[0] : lastMsg };
     }
 
-    stepsExecuted.push('Generating response...');
+    stepsExecuted.push('Checking your workspace data...');
     const toolResult = await executeAiTool(fallbackTool, fallbackArgs, companyName, userName);
 
     let replyText = '';
     if (fallbackTool === 'get_user_activity') {
-      replyText = `### Activity Profile for **${toolResult.userName}** (${companyName})\n\n- **Assigned Tasks**: \`${toolResult.totalTasks}\` active tasks\n- **Discussion Comments**: \`${toolResult.totalComments}\` comments posted\n\n#### Active Work & Deadlines:\n${toolResult.tasks
-        .map((t) => `- **${t.title}** (\`${t.id}\`) [\`${t.status}\`] (\`${t.priority}\`) — Due: \`${t.dueDate}\``)
-        .join('\n')}\n\n#### Recent Comments:\n${toolResult.recentComments.length ? toolResult.recentComments.map((c) => `- *"${c.content}"* on **${c.taskTitle}** (\`${c.taskId}\`)`).join('\n') : '_No recent comments posted._'}`;
+      const taskLines = (toolResult.tasks || [])
+        .slice(0, 4)
+        .map((t) => `- **${t.title}** (\`${t.id}\`) | \`${t.status}\` (\`${t.priority}\`) — ${t.startDate} to ${t.dueDate}.`)
+        .join('\n');
+      const commentLine = toolResult.recentComments?.length
+        ? `\n- Recent update: "${toolResult.recentComments[0].content}" on **${toolResult.recentComments[0].taskTitle}**.`
+        : '';
+      replyText = `${toolResult.userName} is currently assigned to ${toolResult.totalTasks || 0} task${toolResult.totalTasks === 1 ? '' : 's'}.\n${taskLines || '- No active assigned tasks found right now.'}${commentLine}`;
     } else if (fallbackTool === 'get_project_summary') {
-      replyText = `### ${companyName} Executive Project Summary\n\n- **Total Active Tasks**: \`${toolResult.totalTasks}\`\n- **Team Count**: \`${toolResult.teamCount}\` members (${toolResult.teamMembers.join(', ')})\n\n#### Status Breakdown:\n${Object.entries(toolResult.statusCounts)
-        .map(([st, count]) => `- **${st}**: \`${count}\``)
-        .join('\n')}\n\n*Retrieved live from CognoDB graph.*`;
+      const statusLine = Object.entries(toolResult.statusCounts || {})
+        .map(([status, count]) => `${status}: ${count}`)
+        .join(', ');
+      replyText = `Here is the current ${companyName} project snapshot:\n- **${toolResult.totalTasks || 0} tasks** across **${toolResult.teamCount || 0} team members**.\n- Status breakdown: ${statusLine || 'No task status data found'}.\n- Team: ${(toolResult.teamMembers || []).join(', ') || 'No members found'}.`;
+    } else if (fallbackTool === 'search_users') {
+      const users = toolResult.users || [];
+      replyText = users.length
+        ? `Here is the ${companyName} team:\n${users.slice(0, 6).map((member) => `- **${member.name}** — ${member.role || 'Member'}`).join('\n')}`
+        : `I could not find team members for ${companyName}.`;
+    } else if (fallbackTool === 'get_task_details' && toolResult.task) {
+      const task = toolResult.task;
+      replyText = `Here is the task detail:\n- **${task.title}** (\`${task.id}\`) | \`${task.status}\` (\`${task.priority}\`) — ${task.startDate} to ${task.dueDate}.\n- Assigned to: ${task.assignees?.join(', ') || 'Unassigned'}.\n- ${task.description || 'No description added yet.'}`;
+    } else if (fallbackTool === 'create_task' && toolResult.task) {
+      const task = toolResult.task;
+      replyText = `Done, I created **${task.title}** (\`${task.id}\`).\n- Priority: \`${task.priority}\`; status: \`${task.status}\`.\n- Assigned to ${task.assignees?.join(', ') || userName}, due ${task.dueDate}.`;
+    } else if (fallbackTool === 'search_tasks') {
+      const tasks = toolResult.tasks || [];
+      replyText = tasks.length
+        ? `Here are the most relevant tasks:\n${tasks.slice(0, 4).map((t) => `- **${t.title}** (\`${t.id}\`) | \`${t.status}\` (\`${t.priority}\`) — assigned to ${t.assignees?.join(', ') || 'Unassigned'}, due ${t.dueDate}.`).join('\n')}`
+        : 'I could not find matching tasks in this workspace.';
     } else {
-      replyText = `### ${companyName} Graph Insights\n\n- **Organization**: \`${companyName}\`\n- **Query Tool Executed**: \`${fallbackTool}\`\n- **Total Records Found**: \`${toolResult.total || toolResult.totalTasks || 1}\`\n\n*All responses are generated dynamically from authorized CognoDB graph queries.*`;
+      replyText = toolResult.error || 'I could not find enough workspace data to answer that cleanly.';
     }
 
     return NextResponse.json({
